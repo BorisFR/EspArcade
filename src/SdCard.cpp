@@ -1,4 +1,6 @@
-#include <SdCard.hpp>
+#include "SdCard.hpp"
+
+#ifdef ESP32
 
 static File pngFile;
 PNG_PTR_TYPE *pngImage = nullptr;
@@ -84,6 +86,8 @@ static int cbPngData(PNGDRAW *pData)
     return 1;
 }
 
+#endif
+
 // ***********************
 
 SdCard::SdCard()
@@ -91,8 +95,13 @@ SdCard::SdCard()
     isOk = false;
 }
 
+SdCard::~SdCard()
+{
+}
+
 void SdCard::Setup()
 {
+    #ifdef ESP32
     SD_MMC.setPins(PIN_SD_CLK, PIN_SD_CMD, PIN_SD_D0);
     if (!SD_MMC.begin("/sdcard", true, true))
     {
@@ -100,6 +109,7 @@ void SdCard::Setup()
         return;
     }
     // Serial.println("Card Mount Successful");
+    #endif
     isOk = true;
 }
 
@@ -108,51 +118,85 @@ bool SdCard::IsOk()
     return isOk;
 }
 
-bool SdCard::LoadFile(const char *filename, uint8_t *dataArray, uint16_t size, uint16_t atOffset)
+bool SdCard::LoadFile(String filename, uint64_t size, uint64_t offset)
 {
+    Serial.println("Loading file: " + filename);
     if (!isOk)
     {
         Serial.println("SdCard not ready");
         return false;
     }
-    if (dataArray == NULL || size == 0)
+    if (boardMemory == NULL || size == 0)
     {
-        Serial.println("Invalid data array or size");
+        Serial.println("Invalid board memory or size");
         return false;
     }
-    // Open the file
-    if (!SD_MMC.exists(filename))
+#ifdef ESP32
+    // Serial.print("Loading file... "); Serial.println(filename);
+    if (!SD_MMC.exists(filename.c_str()))
     {
-        if (!isOk)
-        {
-            Serial.println("Could not load sd file, not ready");
-            return false;
-        }
-        // Serial.print("Loading file... "); Serial.println(filename);
-        if (!SD_MMC.exists(filename))
-        {
-            Serial.printf("File not found: %s\n", filename);
-            return false;
-        }
-        File file = SD_MMC.open(filename, FILE_READ);
-        if (!file)
-        {
-            Serial.printf("Failed to open file: %s\n", filename);
-            return false;
-        }
-        int index = atOffset;
-        while (file.available() && index < size)
-        {
-            dataArray[index] = file.read();
-            index++;
-        }
-        file.close();
-        return true;
+        Serial.println("File not found: " + filename);
+        return false;
     }
+    File file = SD_MMC.open(filename.c_str(), FILE_READ);
+    if (!file)
+    {
+        Serial.println("Failed to open file: " + filename);
+        return false;
+    }
+    uint64_t index = offset;
+    while (file.available() && index < size)
+    {
+        boardMemory[index] = file.read();
+        index++;
+    }
+    file.close();
+#else
+    std::string fullPath = std::string(PC_PATH) + "roms/" + filename;
+    Serial.println("Loading file... " + fullPath);
+    const char *fname = fullPath.c_str();
+    FILE *pFile = fopen(fname, "rb");
+    if (pFile == NULL)
+    {
+        Serial.println("File not found: " + filename);
+        return false;
+    }
+    fseek(pFile, 0, SEEK_END);
+    uint64_t lSize = ftell(pFile);
+    rewind(pFile);
+    if (size != lSize)
+    {
+        Serial.println("File size mismatch: " + std::to_string(size) + " != " + std::to_string(lSize));
+        fclose(pFile);
+        return false;
+    }
+    unsigned char *buffer = (unsigned char *)malloc(sizeof(char) * lSize);
+    if (buffer == NULL)
+    {
+        Serial.println("Memory malloc error");
+        fclose(pFile);
+        return false;
+    }
+    size_t result = fread(buffer, 1, lSize, pFile);
+    fclose(pFile);
+    if (result != lSize)
+    {
+        Serial.println("File reading error");
+        free(buffer);
+        return false;
+    }
+    for (uint64_t i = 0; i < lSize; ++i)
+    {
+        boardMemory[i + offset] = buffer[i];
+    }
+    free(buffer);
+#endif
+    return true;
 }
 
 bool SdCard::LoadPngFile(const char *filename)
 {
+    #ifdef ESP32
     png.setBuffer(NULL);
     int rc = png.open(filename, cbPngOpen, cbPngClose, cbPngRead, cbPngSeek, cbPngData);
     if (rc != PNG_SUCCESS)
@@ -180,5 +224,6 @@ bool SdCard::LoadPngFile(const char *filename)
         return false;
     }
     png.close();
+    #endif
     return true;
 }

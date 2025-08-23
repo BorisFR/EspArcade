@@ -1,0 +1,86 @@
+	<machine name="invaders" sourcefile="midw8080/mw8080bw.cpp">
+		<description>Space Invaders / Space Invaders M</description>
+		<year>1978</year>
+		<manufacturer>Taito / Midway</manufacturer>
+		<rom name="9316b-0869_m739h.h1" size="2048" crc="734f5ad8" sha1="ff6200af4c9110d8181249cbcef1a8a40fa40b7f" region="maincpu" offset="0"/>
+		<rom name="9316b-0856_m739g.g1" size="2048" crc="6bfaca4a" sha1="16f48649b531bdef8c2d1446c429b5f414524350" region="maincpu" offset="800"/>
+		<rom name="9316b-0855_m739f.f1" size="2048" crc="0ccead96" sha1="537aef03468f63c5b9e11dd61e253f7ae17d9743" region="maincpu" offset="1000"/>
+		<rom name="9316b-0854_m739e.e1" size="2048" crc="14e538b0" sha1="1d6ca0c99f9df71e2990b610deb9d7da0125e2d8" region="maincpu" offset="1800"/>
+		<device_ref name="i8080"/>
+		<device_ref name="screen"/>
+		<device_ref name="watchdog"/>
+		<device_ref name="mb14241"/>
+		<device_ref name="invaders_audio"/>
+		<device_ref name="speaker"/>
+		<device_ref name="sn76477"/>
+		<device_ref name="discrete"/>
+		<chip type="cpu" tag="maincpu" name="Intel 8080" clock="1996800"/>
+		<chip type="audio" tag="soundboard:mono" name="Speaker"/>
+		<chip type="audio" tag="soundboard:snsnd" name="TI SN76477 CSG"/>
+		<chip type="audio" tag="soundboard:discrete" name="Discrete Sound"/>
+		<display tag="screen" type="raster" rotate="270" width="260" height="224" refresh="59.541985" pixclock="4992000" htotal="320" hbend="0" hbstart="260" vtotal="262" vbend="0" vbstart="224" />
+		<sound channels="1"/>
+		<input players="2" coins="1">
+			<control type="joy" player="1" buttons="1" ways="2"/>
+			<control type="joy" player="2" buttons="1" ways="2"/>
+		</input>
+		<dipswitch name="Unknown" tag="IN0" mask="1">
+			<diplocation name="SW" number="8"/>
+			<dipvalue name="Off" value="0" default="yes"/>
+			<dipvalue name="On" value="1"/>
+		</dipswitch>
+		<dipswitch name="Lives" tag="IN2" mask="3">
+			<diplocation name="SW" number="3"/>
+			<diplocation name="SW" number="4"/>
+			<dipvalue name="3" value="0" default="yes"/>
+			<dipvalue name="4" value="1"/>
+			<dipvalue name="5" value="2"/>
+			<dipvalue name="6" value="3"/>
+		</dipswitch>
+		<dipswitch name="Bonus Life" tag="IN2" mask="8">
+			<diplocation name="SW" number="2"/>
+			<dipvalue name="1000" value="8"/>
+			<dipvalue name="1500" value="0" default="yes"/>
+		</dipswitch>
+		<dipswitch name="Display Coinage" tag="IN2" mask="128">
+			<diplocation name="SW" number="1"/>
+			<dipvalue name="Off" value="128"/>
+			<dipvalue name="On" value="0" default="yes"/>
+		</dipswitch>
+		<dipswitch name="Unused" tag="SW5" mask="1">
+			<diplocation name="SW" number="5"/>
+			<dipvalue name="Off" value="0" default="yes"/>
+			<dipvalue name="On" value="1"/>
+		</dipswitch>
+		<dipswitch name="Unused" tag="SW6SW7" mask="1">
+			<diplocation name="SW" number="7"/>
+			<dipvalue name="Off" value="0" default="yes"/>
+			<dipvalue name="On" value="1"/>
+		</dipswitch>
+		<dipswitch name="Unused" tag="SW6SW7" mask="2">
+			<diplocation name="SW" number="6"/>
+			<dipvalue name="Off" value="0" default="yes"/>
+			<dipvalue name="On" value="2"/>
+		</dipswitch>
+		<configuration name="Cabinet" tag="CAB" mask="1">
+			<confsetting name="Upright" value="0" default="yes"/>
+			<confsetting name="Cocktail" value="1"/>
+		</configuration>
+		<port tag=":CAB">
+		</port>
+		<port tag=":CONTP1">
+		</port>
+		<port tag=":CONTP2">
+		</port>
+		<port tag=":IN0">
+		</port>
+		<port tag=":IN1">
+		</port>
+		<port tag=":IN2">
+		</port>
+		<port tag=":SW5">
+		</port>
+		<port tag=":SW6SW7">
+		</port>
+		<driver status="good" emulation="good" savestate="supported"/>
+	</machine>

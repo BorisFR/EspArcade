@@ -9,7 +9,8 @@
 #include <cstdint>
 
 #include "i8080IoDevices.hpp"
-#include "i8080Memory.hpp"
+//#include "i8080Memory.hpp"
+#include "../../Memory.h"
 
 // Forward declarations
 // class I8080IoDevices;
@@ -35,18 +36,18 @@ public:
     void EmulateCycles(uint32_t num_cycles);
     bool Running();
     void Interrupt(uint8_t opcode);
-    void Connect(I8080IoDevices *devices, I8080Memory *memory);
+    void Connect(I8080IoDevices *devices); //, I8080Memory *memory);
 
     /* Memory Read and Write interface */
-    uint8_t MemoryRead(uint16_t address);
-    void MemoryWrite(uint16_t address, uint8_t data);
+    //uint8_t MemoryRead(uint16_t address);
+    //void MemoryWrite(uint16_t address, uint8_t data);
     /* Internal functions */
     void RegularInstruction();
 
 private:
     // External devices class connected to the cpu
     I8080IoDevices *devices;
-    I8080Memory *m_memory;
+    //I8080Memory *m_memory;
 
     // CPU state
 public:

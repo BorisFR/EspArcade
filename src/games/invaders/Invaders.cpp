@@ -1,56 +1,67 @@
 #include "Invaders.hpp"
 
+ROM_START(invaders_rom)
+ROM_REGION(0x10000) /* 64k for code */
+ROM_LOAD("invaders.h", 0x0000, 0x0800, 0x734f5ad8) // 9316b-0869_m739h.h1
+ROM_LOAD("invaders.g", 0x0800, 0x0800, 0x6bfaca4a) // 9316b-0856_m739g.g1
+ROM_LOAD("invaders.f", 0x1000, 0x0800, 0x0ccead96) // 9316b-0855_m739f.f1
+ROM_LOAD("invaders.e", 0x1800, 0x0800, 0x14e538b0) // 9316b-0854_m739e.e1
+ROM_END
+
 Invaders::Invaders()
 {
     Serial.println("Invaders created");
-    isReady = false;
 }
 
 Invaders::~Invaders()
 {
-    if(pngImage != nullptr) {
-        free(pngImage);
-        pngImage = nullptr;
-    }
+    // if(pngImage != nullptr) {
+    //     free(pngImage);
+    //     pngImage = nullptr;
+    // }
     Serial.println("Invaders destroyed");
 }
 
 void Invaders::Setup(SdCard &sdCard)
 {
-    /*this->sdCard = sdCard;
-    if(!this->sdCard.IsOk()) {
-        Serial.println("SdCard not ready");
+    int numElements = sizeof(invaders_rom) / sizeof(invaders_rom[0]);
+    Serial.println("Size: " + String(invaders_rom[0].offset));
+    InitializeMemory(invaders_rom[0].offset);
+    InitializeScreen(INVADERS_WIDTH, INVADERS_HEIGHT);
+    //  8  => 3 - PNG_PIXEL_INDEXED
+    //  24 => 2 - PNG_PIXEL_TRUECOLOR
+    //  32 => 6 - PNG_PIXEL_TRUECOLOR_ALPHA
+    //  if(!sdCard.LoadPngFile("/si/background24.png")) {
+    //     return;
+    // }
+    for (int i = 1; i < (numElements - 1); i++)
+    {
+        String name = String(invaders_rom[i].name);
+        //Serial.println(std::to_string(i) + " => " + invaders_rom[i].name + " : " + std::to_string(invaders_rom[i].offset) + " - " + std::to_string(invaders_rom[i].length));
+        Serial.println(String(i) + " => " + name + " : " + String(invaders_rom[i].offset) + " - " + String(invaders_rom[i].length));
+        if (!LoadRom(sdCard, INVADERS_FOLDER, name, invaders_rom[i].length, invaders_rom[i].offset, invaders_rom[i].crc))
+        {
+            return;
+        }
+    }
+    if(LoadRom(sdCard, "si", "invaders.rom", 0x2000, 0, 0))
+    {
+        Serial.println("Invaders ROM loaded");
+    }
+    else
+    {
+        Serial.println("Error loading Invaders ROM");
         return;
     }
-    Serial.println("SdCard OK");*/
-    if (!this->I8080MemoryInitialize(RAMSIZE)) {
-        Serial.println("Not enought memory for RAM");
-        return;
-    }
-    // 8  => 3 - PNG_PIXEL_INDEXED
-    // 24 => 2 - PNG_PIXEL_TRUECOLOR
-    // 32 => 6 - PNG_PIXEL_TRUECOLOR_ALPHA
-    if(!sdCard.LoadPngFile("/si/background24.png")) {
-        return;
-    }
-    if(!sdCard.LoadFile("/si/invaders.rom", memory, INVADERS_ROM_SIZE, 0)) {
-        return;
-    }
-    cpu.Connect(this, this);
+    //SetMemoryReadAddresss(readmem);
+    //SetMemoryWriteAddresss(writemem);
+    cpu.Connect(this); //, this);
     port0 = 0x0e;
     port1 = 0x00;
     port2 = 0x00;
     state = STATE_IDLE;
-    isReady = true;
-    for (uint16_t y = 0; y < INVADERS_WIDTH; y++)
-    {
-        for (uint16_t x = 0; x < INVADERS_HEIGHT; x++)
-        {
-            uint32_t pos = (y) + (INVADERS_HEIGHT - x - 1) * INVADERS_WIDTH;
-            screen[pos] = 0;
-            screenOld[pos] = 0;
-        }
-    }
+    cpu.Initialize();
+    Game::Setup(sdCard);
 }
 
 void Invaders::Loop()
@@ -105,32 +116,24 @@ void Invaders::Loop()
     // Draw the pixels from the memory locations 0x2400 - 0x3fff
     // into the window screen
 
-    memcpy(screenOld, screen, INVADERS_WIDTH * INVADERS_HEIGHT);
-    /*for (uint16_t y = 0; y < INVADERS_WIDTH; y++)
-    {
-        for (uint16_t x = 0; x < INVADERS_HEIGHT; x++)
-        {
-            uint32_t pos = (y) + (INVADERS_HEIGHT - x - 1) * INVADERS_WIDTH;
-            screenOld[pos] = screen[pos];
-        }
-    }*/
+    memcpy(screenDataOld, screenData, INVADERS_WIDTH * INVADERS_HEIGHT);
 
     uint16_t vram = 0x2400;
     for (uint16_t col = 0; col < INVADERS_WIDTH; col++)
     {
         for (uint16_t row = INVADERS_HEIGHT; row > 0; row -= 8)
         {
-            uint8_t value = cpu.MemoryRead(vram);
+            uint8_t value = boardMemory[vram];
             for (uint8_t j = 0; j < 8; j++)
             {
                 uint32_t index = (col) + (row - j - 1) * INVADERS_WIDTH;
                 if (value & 1 << j)
                 {
-                    screen[index] = 255;
+                    screenData[index] = 255;
                 }
                 else
                 {
-                    screen[index] = 0;
+                    screenData[index] = 0;
                 }
                 index++;
             }
@@ -184,5 +187,36 @@ void Invaders::Button(bool isPressed)
         break;
     case STATE_GAME_OVER:
         break;
+    }
+}
+
+void Invaders::invaders_videoram_w(int offset, int data)
+{
+    if (screenData[offset] != data)
+    {
+        int i, x, y;
+        int col;
+
+        screenData[offset] = data;
+
+        y = offset / 32;
+        x = 8 * (offset % 32);
+
+        /* Calculate overlay color for this byte */
+        // col = Machine->pens[WHITE];
+        // if (x >= 16 && x < 72) col = Machine->pens[GREEN];
+        // if (x < 16 && y > 16 && y < 134) col = Machine->pens[GREEN];
+        // if (x >= 192 && x < 224) col = Machine->pens[RED];
+        //
+        // for (i = 0; i < 8; i++)
+        //{
+        //	if (!(data & 0x01))
+        //		plot_pixel_8080 (x, y, Machine->pens[BLACK]);
+        //	else
+        //		plot_pixel_8080 (x, y, col);
+        //
+        //	x ++;
+        //	data >>= 1;
+        //}
     }
 }

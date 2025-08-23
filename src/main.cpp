@@ -5,25 +5,22 @@ Crystal is 40MHz
 USB mode: USB-Serial/JTAG
 MAC: 84:fc:e6:6d:5e:04
 
-RAM:   [======    ]  58.4% (used 191312 bytes from 327680 bytes)
-Flash: [=         ]  10.0% (used 655417 bytes from 6553600 bytes)
-
-RAM:   [=         ]   7.9% (used 25840 bytes from 327680 bytes)
-Flash: [=         ]   9.5% (used 621281 bytes from 6553600 bytes)
+RAM:   [=         ]   7.9% (used 25968 bytes from 327680 bytes)
+Flash: [=         ]   9.7% (used 634133 bytes from 6553600 bytes)
 */
 
 #include <Arduino.h>
 
-#include <SdCard.hpp>
+#include "SdCard.hpp"
 SdCard sdCard = SdCard();
 
-#include <Display.hpp>
+#include "Display.hpp"
 Display display = Display();
 
-#include <TheTouch.hpp>
+#include "TheTouch.hpp"
 TheTouch touch = TheTouch(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-#include <Game.hpp>
+#include "Game.hpp"
 #include "games/invaders/Invaders.hpp"
 #include "games/pacman/Pacman.hpp"
 Game* game;
@@ -109,20 +106,32 @@ void setup()
     //}
   }*/
  game = new Invaders();
+  if (!game->IsReady())
+  {
+    game->Setup(sdCard);
+    if (game->IsReady())
+    {
+      display.Print("Game Ok", 10, 70);
+    }
+    else
+    {
+      display.Print("Game KO!!!", 10, 70);
+    }
+  }
 }
 
 #define DELTA_X (SCREEN_HEIGHT - INVADERS_WIDTH) / 4
 #define DELTA_Y 146
-unsigned long lastUpdate = 0;
-uint16_t frameCount = 0;
 // bool buttonCreditPushed = false;
 // bool buttonStartPushed = false;
 
 void loop()
 {
-  frameCount++;
-  if (frameCount > 100)
-    delay(100);
+  if (game->IsReady())
+  {
+    game->Loop();
+  }
+  display.Loop();
   touch.Loop();
   if (touch.IsTouched())
   {
@@ -138,7 +147,9 @@ void loop()
         display.Print("Game KO!!!", 10, 70);
       }
     }
-    // invaders.Button(true);
+    game->Button(true);
+    Serial.println("Button pressed");
+    //invaders.Button(true);
     //  invaders.ButtonCredit(true);
     //  buttonCreditPushed = true;
     for (int i = 0; i < touch.Touches(); i++)
@@ -151,7 +162,6 @@ void loop()
     }
     // ts.isTouched = false;
   }
-  game->Loop();
   /*
     invaders.Loop();
     display.BeginWrite();
@@ -199,13 +209,4 @@ void loop()
     }
     display.EndWrite();
     */
-  // display.Test();
-  // delay(1000); // 1 second
-  if (millis() - lastUpdate > 1000) // Update every second
-  {
-    display.ClearRectangle(10, 700, 30, 20);
-    display.Print(String(frameCount), 10, 700);
-    frameCount = 0;
-    lastUpdate = millis();
-  }
 }

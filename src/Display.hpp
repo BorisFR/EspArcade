@@ -3,6 +3,11 @@
 
 #include <Arduino.h>
 #include <Arduino_GFX_Library.h>
+#include "Memory.h"
+
+#define DELTA_X 100
+#define DELTA_Y 146
+
 
 #define PIN_DE 40
 #define PIN_HSYNC 39
@@ -44,15 +49,21 @@ class Display
 {
 public:
     Display();
+    ~Display();
     void Setup();
+    void Loop();
+
+    bool MustExit();
+    void ClearRectangle(uint32_t x, uint32_t y, uint32_t width, uint32_t height);
+    //void Print(std::string text, uint32_t x, uint32_t y);
+    void Print(String text, uint32_t x, uint32_t y);
+
     void Test();
     void Clear();
-    void Print(String text, uint16_t x, uint16_t y);
     void BeginWrite();
     void EndWrite();
     void DrawPng(uint8_t *pngImage, int16_t width, int16_t height);
     void Pixel(uint16_t x, uint16_t y, uint16_t color);
-    void ClearRectangle(uint16_t x, uint16_t y, uint16_t width, uint16_t height);
 
 private:
     Arduino_ESP32RGBPanel *rgbpanel = new Arduino_ESP32RGBPanel(
@@ -64,6 +75,12 @@ private:
         VSYNC_POLARITY, VSYNC_FRONT_PORCH, VSYNC_PULSE_WIDTH, VSYNC_BACK_PORCH);
     Arduino_RGB_Display *gfx = new Arduino_RGB_Display(
         SCREEN_WIDTH, SCREEN_HEIGHT, rgbpanel, SCREEN_ROTATION, SCREEN_AUTO_FLUSH);
+
+    bool mustExit;
+    unsigned long lastUpdate = 0;
+    uint16_t frameCount = 0;
+    uint16_t lastFrameCount = 0;
+
 };
 
 #endif

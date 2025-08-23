@@ -210,8 +210,8 @@ void CPU_8080::CALL(uint8_t hi, uint8_t lo)
 
     uint16_t address = (hi << 8) | lo;
     uint16_t ret = pc + 3;
-    MemoryWrite(sp - 1, (ret >> 8) & 0xff);
-    MemoryWrite(sp - 2, (ret & 0xff));
+    boardMemory[sp - 1] = (ret >> 8) & 0xff;
+    boardMemory[sp - 2] = (ret & 0xff);
     sp = sp - 2;
     pc = (hi << 8) | lo;
     cycles += 17;
@@ -220,8 +220,8 @@ void CPU_8080::CALL(uint8_t hi, uint8_t lo)
 void CPU_8080::CALL(uint16_t address)
 {
     uint16_t ret = pc;
-    MemoryWrite(sp - 1, (ret >> 8) & 0xff);
-    MemoryWrite(sp - 2, (ret & 0xff));
+    boardMemory[sp - 1] = (ret >> 8) & 0xff;
+    boardMemory[sp - 2] = (ret & 0xff);
     sp = sp - 2;
     pc = address;
     /* cycles += 17; */
@@ -233,8 +233,8 @@ void CPU_8080::C_Cond(uint8_t hi, uint8_t lo, bool cond)
     if (cond)
     {
         uint16_t ret = pc + 3;
-        MemoryWrite(sp - 1, (ret >> 8) & 0xff);
-        MemoryWrite(sp - 2, (ret & 0xff));
+        boardMemory[sp - 1] = (ret >> 8) & 0xff;
+        boardMemory[sp - 2] = (ret & 0xff);
         sp = sp - 2;
         pc = (hi << 8) | lo;
         cycles += 17;
@@ -264,8 +264,8 @@ void CPU_8080::R_cond(bool cond)
 
 void CPU_8080::RET()
 {
-    pc = MemoryRead(sp) |
-         ((MemoryRead(sp + 1) << 8) & 0xff00);
+    pc = boardMemory[sp] |
+         ((boardMemory[sp + 1] << 8) & 0xff00);
     sp += 2;
     cycles += 10;
 }
@@ -279,8 +279,8 @@ void CPU_8080::PCHL()
 void CPU_8080::RST(uint8_t exp)
 {
     uint16_t new_pc = ((uint16_t)exp * 8);
-    MemoryWrite(sp - 1, ((pc) >> 8) & 0xff);
-    MemoryWrite(sp - 2, ((pc) & 0xff));
+    boardMemory[sp - 1] = ((pc) >> 8) & 0xff;
+    boardMemory[sp - 2] = ((pc) & 0xff);
     sp = sp - 2;
     pc = new_pc;
     cycles += 11;
@@ -300,9 +300,9 @@ void CPU_8080::INR_r(uint8_t &r)
 void CPU_8080::INR_M()
 {
     uint16_t address = (h << 8) | l;
-    uint8_t num = MemoryRead(address);
+    uint8_t num = boardMemory[address];
     num++;
-    MemoryWrite(address, num);
+    boardMemory[address] = num;
 
     ZSPFlags(num);
 
@@ -385,9 +385,9 @@ void CPU_8080::DCX_D()
 void CPU_8080::DCR_M()
 {
     uint16_t address = (h << 8) | l;
-    uint8_t num = MemoryRead(address);
+    uint8_t num = boardMemory[address];
     num--;
-    MemoryWrite(address, num);
+    boardMemory[address] = num;
 
     ZSPFlags(num);
 
@@ -668,7 +668,7 @@ void CPU_8080::MOV_r_r(uint8_t &r1, uint8_t &r2)
 void CPU_8080::MOV_r_m(uint8_t &r)
 {
     uint16_t address = (h << 8) | l;
-    r = MemoryRead(address);
+    r = boardMemory[address];
     pc += 1;
     cycles += 7;
 }
@@ -676,7 +676,7 @@ void CPU_8080::MOV_r_m(uint8_t &r)
 void CPU_8080::MOV_m_r(uint8_t &r)
 {
     uint16_t address = (h << 8) | l;
-    MemoryWrite(address, r);
+    boardMemory[address] = r;
     pc += 1;
     cycles += 7;
 }
@@ -694,7 +694,7 @@ void CPU_8080::LXI(uint8_t &r1, uint8_t &r2, uint8_t d1, uint8_t d2)
 void CPU_8080::LDAX(uint8_t &r1, uint8_t &r2)
 {
     uint16_t address = (r1 << 8) | r2;
-    a = MemoryRead(address);
+    a = boardMemory[address];
     pc += 1;
     cycles += 7;
 }
@@ -703,7 +703,7 @@ void CPU_8080::LDAX(uint8_t &r1, uint8_t &r2)
 void CPU_8080::STA(uint8_t byte_h, uint8_t byte_l)
 {
     uint16_t address = (byte_h << 8) | byte_l;
-    MemoryWrite(address, a);
+    boardMemory[address] = a;
     pc += 3;
     cycles += 13;
 }
@@ -712,7 +712,7 @@ void CPU_8080::STA(uint8_t byte_h, uint8_t byte_l)
 void CPU_8080::LDA(uint8_t byte_h, uint8_t byte_l)
 {
     uint16_t address = (byte_h << 8) | byte_l;
-    a = MemoryRead(address);
+    a = boardMemory[address];
     pc += 3;
     cycles += 13;
 }
@@ -721,7 +721,7 @@ void CPU_8080::LDA(uint8_t byte_h, uint8_t byte_l)
 void CPU_8080::MVI_M(uint8_t data)
 {
     uint16_t address = (h << 8) | l;
-    MemoryWrite(address, data);
+    boardMemory[address] = data;
     pc += 2;
     cycles += 10;
 }
@@ -745,7 +745,7 @@ void CPU_8080::XCHG()
 void CPU_8080::STAX_B()
 {
     uint16_t address = (b << 8) | c;
-    MemoryWrite(address, a);
+    boardMemory[address] = a;
     pc += 1;
     cycles += 7;
 }
@@ -754,7 +754,7 @@ void CPU_8080::STAX_B()
 void CPU_8080::STAX_D()
 {
     uint16_t address = (d << 8) | e;
-    MemoryWrite(address, a);
+    boardMemory[address] = a;
     pc += 1;
     cycles += 7;
 }
@@ -763,8 +763,8 @@ void CPU_8080::STAX_D()
 void CPU_8080::LHLD(uint8_t hi, uint8_t lo)
 {
     uint16_t address = (hi << 8) | lo;
-    l = MemoryRead(address);
-    h = MemoryRead(address + 1);
+    l = boardMemory[address];
+    h = boardMemory[address + 1];
     pc += 3;
     cycles += 16;
 }
@@ -773,8 +773,8 @@ void CPU_8080::LHLD(uint8_t hi, uint8_t lo)
 void CPU_8080::SHLD(uint8_t hi, uint8_t lo)
 {
     uint16_t address = (hi << 8) | lo;
-    MemoryWrite(address, l);
-    MemoryWrite(address + 1, h);
+    boardMemory[address] = l;
+    boardMemory[address + 1] = h;
     pc += 3;
     cycles += 16;
 }
@@ -797,8 +797,8 @@ void CPU_8080::LXI_SP(uint8_t hi, uint8_t lo)
 // Push Register Pair
 void CPU_8080::PUSH_rp(uint8_t &r1, uint8_t &r2)
 {
-    MemoryWrite(sp - 1, r1);
-    MemoryWrite(sp - 2, r2);
+    boardMemory[sp - 1] = r1;
+    boardMemory[sp - 2] = r2;
     sp = sp - 2;
     pc += 1;
 }
@@ -806,8 +806,8 @@ void CPU_8080::PUSH_rp(uint8_t &r1, uint8_t &r2)
 // Pop Register Pair
 void CPU_8080::POP_rp(uint8_t &r1, uint8_t &r2)
 {
-    r1 = MemoryRead(sp + 1);
-    r2 = MemoryRead(sp);
+    r1 = boardMemory[sp + 1];
+    r2 = boardMemory[sp];
     sp = sp + 2;
     pc += 1;
     cycles += 10;
@@ -841,8 +841,8 @@ void CPU_8080::PUSH_PSW()
         flags |= 0x80;
     } // bit 7
 
-    MemoryWrite(sp - 1, a);
-    MemoryWrite(sp - 2, flags);
+    boardMemory[sp - 1] = a;
+    boardMemory[sp - 2] = flags;
     sp = sp - 2;
     pc += 1;
     cycles += 11;
@@ -851,14 +851,14 @@ void CPU_8080::PUSH_PSW()
 // Pop Flags and A Off Stack
 void CPU_8080::POP_PSW()
 {
-    uint8_t flags = MemoryRead(sp);
+    uint8_t flags = boardMemory[sp];
     cc.cy = ((flags & 0x01) != 0); // bit 0
     cc.p = ((flags & 0x04) != 0);  // bit 2
     cc.ac = ((flags & 0x10) != 0); // bit 4
     cc.z = ((flags & 0x40) != 0);  // bit 6
     cc.s = ((flags & 0x80) != 0);  // bit 7
 
-    a = MemoryRead(sp + 1);
+    a = boardMemory[sp + 1];
     sp = sp + 2;
     pc += 1;
     cycles += 10;
@@ -870,12 +870,12 @@ void CPU_8080::XTHL()
     uint8_t tmp;
     // l<->(SP)
     tmp = l;
-    l = MemoryRead(sp);
-    MemoryWrite(sp, tmp);
+    l = boardMemory[sp];
+    boardMemory[sp] = tmp;
     // h<->(SP+1)
     tmp = h;
-    h = MemoryRead(sp + 1);
-    MemoryWrite(sp + 1, tmp);
+    h = boardMemory[sp + 1];
+    boardMemory[sp + 1] = tmp;
 
     pc += 1;
     cycles += 18;
@@ -897,7 +897,7 @@ uint8_t CPU_8080::read_rp(uint8_t r1, uint8_t r2)
 
 uint8_t CPU_8080::ReadFromRegPair(uint8_t &hi, uint8_t &lo)
 {
-    return MemoryRead((uint16_t)(hi << 8) | (uint16_t)lo);
+    return boardMemory[(uint16_t)(hi << 8) | (uint16_t)lo];
 }
 
 void CPU_8080::ZSPFlags(uint8_t result)

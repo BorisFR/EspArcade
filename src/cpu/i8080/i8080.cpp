@@ -1,5 +1,5 @@
 #include "i8080.hpp"
-#include "i8080Memory.hpp"
+//#include "i8080Memory.hpp"
 
 void CPU_8080::Initialize()
 {
@@ -43,7 +43,7 @@ void CPU_8080::RegularInstruction()
     }
     // Show the disassembled instruction before executing
     // Fetch opcode
-    uint8_t opcode = MemoryRead(pc);
+    uint8_t opcode = boardMemory[pc];
     ExecuteInstruction(opcode);
 }
 
@@ -59,8 +59,8 @@ void CPU_8080::Interrupt(uint8_t opcode)
 
 void CPU_8080::ExecuteInstruction(uint8_t opcode)
 {
-#define BYTE1 MemoryRead(pc + 1)
-#define BYTE2 MemoryRead(pc + 2)
+#define BYTE1 boardMemory[pc + 1]
+#define BYTE2 boardMemory[pc + 2]
     // Decode and execute instruction
     switch (opcode)
     {
@@ -843,20 +843,22 @@ bool CPU_8080::Parity(uint8_t byte)
     return parity_table[byte];
 }
 
-uint8_t CPU_8080::MemoryRead(uint16_t address)
-{
-    return m_memory->Read(address);
-}
+//uint8_t CPU_8080::MemoryRead(uint16_t address)
+//{
+//    return boardMemory[address];
+//    //return m_memory->Read(address);
+//}
 
-void CPU_8080::MemoryWrite(uint16_t address, uint8_t data)
-{
-    m_memory->Write(address, data);
-}
+//void CPU_8080::MemoryWrite(uint16_t address, uint8_t data)
+//{
+//    boardMemory[address] = data;
+//    //m_memory->Write(address, data);
+//}
 
-void CPU_8080::Connect(I8080IoDevices *l_devices, I8080Memory *i_memory)
+void CPU_8080::Connect(I8080IoDevices *l_devices) //, I8080Memory *i_memory)
 {
     devices = l_devices;
-    m_memory = i_memory;
+    //m_memory = i_memory;
 }
 
 void CPU_8080::logical_flags(uint8_t result)
