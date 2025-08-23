@@ -37,17 +37,21 @@ static int32_t cbPngSeek(PNGFILE *handle, int32_t position)
 
 static int cbPngData(PNGDRAW *pData)
 {
-    //Serial.print("$");
-    //Serial.printf("pData->iWidth: %d, pData->y: %d\n", pData->iWidth, pData->y);
+    // Serial.print("$");
+    // Serial.printf("pData->iWidth: %d, pData->y: %d\n", pData->iWidth, pData->y);
 
     uint16_t lineBuffer[pData->iWidth];
     png.getLineAsRGB565(pData, lineBuffer, PNG_RGB565_BIG_ENDIAN, 0xffffffff); // PNG_RGB565_BIG_ENDIAN // PNG_RGB565_LITTLE_ENDIAN
     uint16_t pos = pData->y * pData->iWidth;
-    for (int x = 0; x < pData->iWidth; x++){
-        if(pos < pngMemorySize) {
+    for (int x = 0; x < pData->iWidth; x++)
+    {
+        if (pos < pngMemorySize)
+        {
             pngImage[pos++] = lineBuffer[x];
-        } else {
-          Serial.printf("Warning: PNG image data exceeds allocated memory (pos: %d, memorySize: %d)\n", pos, pngMemorySize);
+        }
+        else
+        {
+            Serial.printf("Warning: PNG image data exceeds allocated memory (pos: %d, memorySize: %d)\n", pos, pngMemorySize);
         }
     }
 
@@ -76,7 +80,7 @@ static int cbPngData(PNGDRAW *pData)
     // PNG_BPP_TYPE *lineBuffer = (PNG_BPP_TYPE *)pData->pUser;
     // memcpy(&lineBuffer[pData->y * pData->iWidth], pData->pPixels, pData->iWidth * sizeof(PNG_BPP_TYPE));
 
-    //Serial.print("X");
+    // Serial.print("X");
     return 1;
 }
 
@@ -104,33 +108,47 @@ bool SdCard::IsOk()
     return isOk;
 }
 
-bool SdCard::LoadFile(const char *filename, uint8_t *dataArray, uint16_t size)
+bool SdCard::LoadFile(const char *filename, uint8_t *dataArray, uint16_t size, uint16_t atOffset)
 {
     if (!isOk)
     {
-        Serial.println("Could not load sd file, not ready");
+        Serial.println("SdCard not ready");
         return false;
     }
-    // Serial.print("Loading file... "); Serial.println(filename);
+    if (dataArray == NULL || size == 0)
+    {
+        Serial.println("Invalid data array or size");
+        return false;
+    }
+    // Open the file
     if (!SD_MMC.exists(filename))
     {
-        Serial.printf("File not found: %s\n", filename);
-        return false;
+        if (!isOk)
+        {
+            Serial.println("Could not load sd file, not ready");
+            return false;
+        }
+        // Serial.print("Loading file... "); Serial.println(filename);
+        if (!SD_MMC.exists(filename))
+        {
+            Serial.printf("File not found: %s\n", filename);
+            return false;
+        }
+        File file = SD_MMC.open(filename, FILE_READ);
+        if (!file)
+        {
+            Serial.printf("Failed to open file: %s\n", filename);
+            return false;
+        }
+        int index = atOffset;
+        while (file.available() && index < size)
+        {
+            dataArray[index] = file.read();
+            index++;
+        }
+        file.close();
+        return true;
     }
-    File file = SD_MMC.open(filename, FILE_READ);
-    if (!file)
-    {
-        Serial.printf("Failed to open file: %s\n", filename);
-        return false;
-    }
-    int index = 0;
-    while (file.available() && index < size)
-    {
-        dataArray[index] = file.read();
-        index++;
-    }
-    file.close();
-    return true;
 }
 
 bool SdCard::LoadPngFile(const char *filename)
@@ -143,7 +161,7 @@ bool SdCard::LoadPngFile(const char *filename)
         png.close();
         return false;
     }
-    pngMemorySize = png.getWidth() * png.getHeight();// * sizeof(PNG_PTR_TYPE);
+    pngMemorySize = png.getWidth() * png.getHeight(); // * sizeof(PNG_PTR_TYPE);
     Serial.printf("image specs: (%d x %d), %d bpp, pixel type: %d, memorySize: %d\n", png.getWidth(), png.getHeight(), png.getBpp(), png.getPixelType(), pngMemorySize);
     pngImage = (PNG_PTR_TYPE *)malloc(pngMemorySize);
     if (pngImage == NULL)

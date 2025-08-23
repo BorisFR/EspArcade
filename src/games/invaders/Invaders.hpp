@@ -3,8 +3,7 @@
 
 #pragma once
 
-#include <Arduino.h>
-#include <SdCard.hpp>
+#include <Game.hpp>
 
 //#include "Invaders_rom.hpp"
 // #include "../OneGame.hpp"
@@ -75,13 +74,13 @@ enum InvadersState {
 };
 
 /// @brief Invaders game
-class Invaders : public I8080IoDevices, I8080Memory
+class Invaders : I8080IoDevices, I8080Memory, public Game
 {
 public:
     Invaders();
     ~Invaders();
-    void Setup(SdCard &sdCard);
-    void Loop();
+    void Setup(SdCard &sdCard) override;
+    void Loop() override;
     void Button(bool isPressed);
     void ButtonCredit(bool isPressed);
     void ButtonStart(bool isPressed);

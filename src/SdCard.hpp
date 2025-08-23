@@ -17,7 +17,7 @@ public:
     SdCard();
     void Setup();
     bool IsOk();
-    bool LoadFile(const char *filename, uint8_t *dataArray, uint16_t size);
+    bool LoadFile(const char *filename, uint8_t *dataArray, uint16_t size, uint16_t atOffset = 0);
     bool LoadPngFile(const char *filename);
     
 

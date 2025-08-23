@@ -2,7 +2,8 @@
 
 Invaders::Invaders()
 {
-    IsReady = false;
+    Serial.println("Invaders created");
+    isReady = false;
 }
 
 Invaders::~Invaders()
@@ -11,7 +12,7 @@ Invaders::~Invaders()
         free(pngImage);
         pngImage = nullptr;
     }
-    // std::cout << "~Invaders()" << std::endl;
+    Serial.println("Invaders destroyed");
 }
 
 void Invaders::Setup(SdCard &sdCard)
@@ -32,7 +33,7 @@ void Invaders::Setup(SdCard &sdCard)
     if(!sdCard.LoadPngFile("/si/background24.png")) {
         return;
     }
-    if(!sdCard.LoadFile("/si/invaders.rom", memory, INVADERS_ROM_SIZE)) {
+    if(!sdCard.LoadFile("/si/invaders.rom", memory, INVADERS_ROM_SIZE, 0)) {
         return;
     }
     cpu.Connect(this, this);
@@ -40,7 +41,7 @@ void Invaders::Setup(SdCard &sdCard)
     port1 = 0x00;
     port2 = 0x00;
     state = STATE_IDLE;
-    IsReady = true;
+    isReady = true;
     for (uint16_t y = 0; y < INVADERS_WIDTH; y++)
     {
         for (uint16_t x = 0; x < INVADERS_HEIGHT; x++)

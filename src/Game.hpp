@@ -1,15 +1,24 @@
 #ifndef GAMES_HPP
 #define GAMES_HPP
 
-//#include "galaga_logo.h"
-
-//#define GALAGA_LOGO_Y  12   // to 23
+#include <Arduino.h>
+#include <SdCard.hpp>
 
 class Game
 {
 public:
     Game();
-    void Setup();
+    ~Game();
+    virtual void Setup(SdCard &sdCard);
+    virtual void Loop();
+    bool IsReady();
+
+protected:
+    bool isReady;
+    bool InitializeMemory(uint16_t size);
+    bool LoadRom(SdCard &sdCard, const char *filename, uint16_t size, uint16_t atOffset = 0);
+    uint16_t boardMemorySize;
+    uint8_t *boardMemory;
 
 private:
 };
