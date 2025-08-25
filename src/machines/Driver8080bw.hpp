@@ -1,8 +1,11 @@
 #ifndef DRIVER8080BW_HPP
 #define DRIVER8080BW_HPP
 
-#include <Arduino.h>
-//#include "../Arduino.h"
+#ifdef ESP32
+#include "Arduino.h"
+#else
+#include "../../lib/Arduino.h"
+#endif
 
 class Driver8080bw
 {

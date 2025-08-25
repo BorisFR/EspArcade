@@ -9,7 +9,11 @@ RAM:   [=         ]   7.9% (used 25968 bytes from 327680 bytes)
 Flash: [=         ]   9.7% (used 634133 bytes from 6553600 bytes)
 */
 
-#include <Arduino.h>
+#ifdef ESP32
+#include "Arduino.h"
+#else
+#include "../lib/Arduino.h"
+#endif
 
 #include "SdCard.hpp"
 SdCard sdCard = SdCard();
@@ -23,7 +27,7 @@ TheTouch touch = TheTouch(SCREEN_WIDTH, SCREEN_HEIGHT);
 #include "Game.hpp"
 #include "games/invaders/Invaders.hpp"
 #include "games/pacman/Pacman.hpp"
-Game* game;
+Game *game;
 
 // #include "games/invaders/Invaders.hpp"
 // Invaders invaders;
@@ -105,7 +109,7 @@ void setup()
     //  y = 0;
     //}
   }*/
- game = new Invaders();
+  game = new Invaders();
   if (!game->IsReady())
   {
     game->Setup(sdCard);
@@ -120,8 +124,8 @@ void setup()
   }
 }
 
-#define DELTA_X (SCREEN_HEIGHT - INVADERS_WIDTH) / 4
-#define DELTA_Y 146
+//#define DELTA_X (SCREEN_HEIGHT - INVADERS_WIDTH) / 4
+//#define DELTA_Y 146
 // bool buttonCreditPushed = false;
 // bool buttonStartPushed = false;
 
@@ -132,31 +136,27 @@ void loop()
     game->Loop();
   }
   display.Loop();
+#ifndef ESP32
+  if (display.IsKeyCredit())
+  {
+    game->Button(true);
+  }
+#endif
   touch.Loop();
   if (touch.IsTouched())
   {
-    if (!game->IsReady())
-    {
-      game->Setup(sdCard);
-      if (game->IsReady())
-      {
-        display.Print("Game Ok", 10, 70);
-      }
-      else
-      {
-        display.Print("Game KO!!!", 10, 70);
-      }
-    }
     game->Button(true);
     Serial.println("Button pressed");
-    //invaders.Button(true);
-    //  invaders.ButtonCredit(true);
-    //  buttonCreditPushed = true;
+    // invaders.Button(true);
+    //   invaders.ButtonCredit(true);
+    //   buttonCreditPushed = true;
     for (int i = 0; i < touch.Touches(); i++)
     {
       display.ClearRectangle(10, 730, 300, 20);
+#ifdef ESP32
       String text = "Touch " + String(i) + ": " + String(touch.Points(i).x) + "/" + String(touch.Points(i).y);
       display.Print(text, 10, 730);
+#endif
       // Serial.print("  size: ");
       // Serial.println(ts.points[i].size);
     }
@@ -210,3 +210,16 @@ void loop()
     display.EndWrite();
     */
 }
+
+#ifndef ESP32
+int main()
+{
+  setup();
+  while (!display.MustExit())
+  {
+    loop();
+  }
+  delete game;
+  return 0;
+}
+#endif

@@ -1,7 +1,13 @@
 #ifndef THETOUCH_HPP
 #define THETOUCH_HPP
 
-#include <Arduino.h>
+#ifdef ESP32
+#include "Arduino.h"
+#else
+#include "../lib/Arduino.h"
+#endif
+
+#ifdef ESP32
 #include "TAMC_GT911.h"
 #define I2C_SDA_PIN 17
 #define I2C_SCL_PIN 18
@@ -10,6 +16,9 @@
 #define TOUCH_ROTATION ROTATION_RIGHT
 
 class TheTouch : TAMC_GT911
+#else
+class TheTouch
+#endif
 {
 public:
     TheTouch(uint16_t screenWidth, uint16_t screenHeight);
@@ -19,10 +28,13 @@ public:
     void Loop();
     bool IsTouched();
     uint8_t Touches();
+    #ifdef ESP32
     TP_Point Points(uint8_t index) { return this->points[index]; }
+    #else
+    uint8_t Points(uint8_t index) { return 0; }
+    #endif
 
 private:
-    //TAMC_GT911 ts;
 
 };
 

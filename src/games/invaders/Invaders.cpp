@@ -24,25 +24,20 @@ Invaders::~Invaders()
 
 void Invaders::Setup(SdCard &sdCard)
 {
-    int numElements = sizeof(invaders_rom) / sizeof(invaders_rom[0]);
-    Serial.println("Size: " + String(invaders_rom[0].offset));
-    InitializeMemory(invaders_rom[0].offset);
-    InitializeScreen(INVADERS_WIDTH, INVADERS_HEIGHT);
+    Serial.println("Space Invaders setup");
+
     //  8  => 3 - PNG_PIXEL_INDEXED
     //  24 => 2 - PNG_PIXEL_TRUECOLOR
     //  32 => 6 - PNG_PIXEL_TRUECOLOR_ALPHA
     //  if(!sdCard.LoadPngFile("/si/background24.png")) {
     //     return;
     // }
-    for (int i = 1; i < (numElements - 1); i++)
+
+    
+    //int numElements = sizeof(invaders_rom) / sizeof(invaders_rom[0]);    
+    if(!Initialize(sdCard, INVADERS_FOLDER, invaders_rom, SIZEOF(invaders_rom), INVADERS_WIDTH, INVADERS_HEIGHT))
     {
-        String name = String(invaders_rom[i].name);
-        //Serial.println(std::to_string(i) + " => " + invaders_rom[i].name + " : " + std::to_string(invaders_rom[i].offset) + " - " + std::to_string(invaders_rom[i].length));
-        Serial.println(String(i) + " => " + name + " : " + String(invaders_rom[i].offset) + " - " + String(invaders_rom[i].length));
-        if (!LoadRom(sdCard, INVADERS_FOLDER, name, invaders_rom[i].length, invaders_rom[i].offset, invaders_rom[i].crc))
-        {
-            return;
-        }
+        return;
     }
     //if(LoadRom(sdCard, "si", "invaders.rom", 0x2000, 0, 0))
     //{

@@ -28,7 +28,11 @@ bool Game::InitializeMemory(uint64_t size)
         Serial.println("Error allocating memory");
         return false;
     }
+#ifdef ESP32
     Serial.println("Memory allocated: " + String(boardMemorySize) + " bytes");
+#else
+    Serial.println("Memory allocated: " + std::to_string(boardMemorySize) + " bytes");
+#endif
     for (uint64_t i = 0; i < boardMemorySize; i++)
     {
         boardMemory[i] = 0;
@@ -64,6 +68,7 @@ bool Game::InitializeScreen(uint32_t width, uint32_t height)
 {
     screenWidth = width;
     screenHeight = height;
+    Serial.println("Initializing screen");
     screenData = (uint8_t *)malloc(screenWidth * screenHeight * sizeof(uint8_t));
     if (screenData == NULL)
     {
@@ -83,6 +88,49 @@ bool Game::InitializeScreen(uint32_t width, uint32_t height)
     for (uint16_t i = 0; i < screenWidth * screenHeight; i++)
     {
         screenDataOld[i] = 0;
+    }
+#ifdef ESP32
+    Serial.println("Screen allocated: " + String(screenWidth * screenHeight * sizeof(uint8_t)) + " bytes");
+#else
+    Serial.println("Screen allocated: " + std::to_string(screenWidth * screenHeight * sizeof(uint8_t)) + " bytes");
+#endif
+    return true;
+}
+
+bool Game::Initialize(SdCard &sdCard, String folder, RomModule roms[], uint32_t number, uint32_t width, uint32_t height)
+{
+    Serial.println("Loading all ROMs from folder: " + folder);
+    InitializeMemory(roms[0].offset);
+    InitializeScreen(width, height);
+    int numElements = number;
+    if(numElements == 0) {
+        Serial.println("No ROMs found");
+        return false;
+    }
+#ifdef ESP32
+    Serial.println("Size: " + String(roms[0].offset));
+#else
+    Serial.println("Size: " + std::to_string(roms[0].offset));
+#endif
+    for (int i = 0; i < (numElements - 1); i++)
+    {
+        if(roms[i].name == NULL) {
+            continue;
+        }
+        if(roms[i].offset & ROMFLAG_DISPOSE) {
+
+        }
+
+        String name = String(roms[i].name);
+#ifdef ESP32
+        Serial.println(String(i) + " => " + name + " : " + String(roms[i].offset) + " - " + String(roms[i].length));
+#else
+        Serial.println(std::to_string(i) + " => " + name + " : " + std::to_string(roms[i].offset) + " - " + std::to_string(roms[i].length));
+#endif
+        if (!LoadRom(sdCard, folder, name, roms[i].length, roms[i].offset, roms[i].crc))
+        {
+            return false;
+        }
     }
     return true;
 }

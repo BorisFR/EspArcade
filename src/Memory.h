@@ -12,6 +12,8 @@ extern unsigned char *screenDataOld;
 extern uint32_t screenWidth;
 extern uint32_t screenHeight;
 
+#define SIZEOF(arr) sizeof(arr) / sizeof(*arr)
+
 // https://github.com/Jean-MarcHarvengt/teensyMAME/blob/master/teensyMAMEClassic4/common.h
 struct RomModule
 {
@@ -20,9 +22,31 @@ struct RomModule
 	unsigned int length;		/* length of the file */
 	unsigned int crc;			/* standard CRC-32 checksum */
 };
+
+// https://github.com/Jean-MarcHarvengt/teensyMAME/blob/master/teensyMAMEClassic1/common.h
+
+#define ROMFLAG_MASK          0xf0000000           /* 4 bits worth of flags in the high nibble */
+#define ROMFLAG_ALTERNATE     0x80000000           /* Alternate bytes, either even or odd */
+#define ROMFLAG_DISPOSE       0x80000000           /* Dispose of this region when done */
+#define ROMFLAG_IGNORE        0x40000000           /* BM: Ignored - drivers must load this region themselves */
+#define ROMFLAG_WIDE          0x40000000           /* 16-bit ROM; may need byte swapping */
+#define ROMFLAG_SWAP          0x20000000           /* 16-bit ROM with bytes in wrong order */
+
+#define ROM_CPU               0x10000000           /* CPU ROM */
+#define ROM_GFX               0x20000000           /* Graphics ROM */
+#define ROM_SND               0x40000000           /* Sound ROM */
+#define ROM_COLOR             0x80000000           /* Color ROM */
+
+
+// change are made, I add ROM_CPU/GFX/SND at the end
 //#define ROM_START(name) static struct RomModule name[] = {
 #define ROM_START(name) RomModule name[] = {
-#define ROM_REGION(length) { 0, length, 0, 0 },
+#define ROM_REGION(length) { 0, length, 0, ROM_CPU },
+#define ROM_REGION_GFX(length) { 0, length, 0, ROM_GFX },
+#define ROM_REGION_SND(length) { 0, length, 0, ROM_SND },
+#define ROM_REGION_COLOR(length) { 0, length, 0, ROM_COLOR },
+#define ROM_REGION_DISPOSE(length) { 0, length, 0, ROMFLAG_DISPOSE },
+#define ROM_REGION_OPTIONAL(length) { 0, length, 0, ROMFLAG_IGNORE },
 #define ROM_LOAD(name,offset,length,crc) { name, offset, length, crc },
 #define ROM_END { 0, 0, 0, 0 } };
 

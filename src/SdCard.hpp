@@ -1,7 +1,12 @@
 #ifndef IMAGE_SD_HPP
 #define IMAGE_SD_HPP
 
-#include <Arduino.h>
+#ifdef ESP32
+#include "Arduino.h"
+#else
+#include "../lib/Arduino.h"
+#endif
+
 #include "Memory.h"
 
 #ifdef ESP32
