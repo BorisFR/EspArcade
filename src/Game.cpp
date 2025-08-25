@@ -40,14 +40,20 @@ bool Game::InitializeMemory(uint64_t size)
     return true;
 }
 
-void Game::InitCrc32Table() {
+void Game::InitCrc32Table()
+{
     const uint32_t polynomial = 0xEDB88320;
-    for (uint32_t i = 0; i < 256; ++i) {
+    for (uint32_t i = 0; i < 256; ++i)
+    {
         uint32_t crc = i;
-        for (uint32_t j = 0; j < 8; ++j) {
-            if (crc & 1) {
+        for (uint32_t j = 0; j < 8; ++j)
+        {
+            if (crc & 1)
+            {
                 crc = (crc >> 1) ^ polynomial;
-            } else {
+            }
+            else
+            {
                 crc >>= 1;
             }
         }
@@ -55,9 +61,11 @@ void Game::InitCrc32Table() {
     }
 }
 
-uint32_t Game::GetCrc32(uint64_t offset, uint64_t length) {
+uint32_t Game::GetCrc32(uint64_t offset, uint64_t length)
+{
     uint32_t crc = 0xFFFFFFFF;
-    for (uint64_t i = 0; i < length; ++i) {
+    for (uint64_t i = 0; i < length; ++i)
+    {
         uint8_t index = (crc ^ boardMemory[i + offset]) & 0xFF;
         crc = (crc >> 8) ^ crc32_table[index];
     }
@@ -100,10 +108,11 @@ bool Game::InitializeScreen(uint32_t width, uint32_t height)
 bool Game::Initialize(SdCard &sdCard, String folder, RomModule roms[], uint32_t number, uint32_t width, uint32_t height)
 {
     Serial.println("Loading all ROMs from folder: " + folder);
-    InitializeMemory(roms[0].offset);
+    //InitializeMemory(roms[0].offset);
     InitializeScreen(width, height);
     int numElements = number;
-    if(numElements == 0) {
+    if (numElements == 0)
+    {
         Serial.println("No ROMs found");
         return false;
     }
@@ -114,11 +123,55 @@ bool Game::Initialize(SdCard &sdCard, String folder, RomModule roms[], uint32_t 
 #endif
     for (int i = 0; i < (numElements - 1); i++)
     {
-        if(roms[i].name == NULL) {
+        if (roms[i].name == NULL)
+        {
+            switch (roms[i].crc)
+            {
+            case ROM_CPU:
+                romType = ROM_CPU;
+                boardMemorySize = roms[0].offset;
+                boardMemory = (uint8_t *)malloc(boardMemorySize * sizeof(uint8_t));
+                if (boardMemory == NULL)
+                {
+                    Serial.println("Error allocating board memory");
+                    return false;
+                }
+                break;
+            case ROM_GFX:
+                romType = ROM_GFX;
+                gfxMemorySize = roms[0].offset;
+                gfxMemory = (uint8_t *)malloc(gfxMemorySize * sizeof(uint8_t));
+                if (gfxMemory == NULL)
+                {
+                    Serial.println("Error allocating gfx memory");
+                    return false;
+                }
+                break;
+            case ROM_COLOR:
+                romType = ROM_COLOR;
+                colorMemorySize = roms[0].offset;
+                colorMemory = (uint8_t *)malloc(colorMemorySize * sizeof(uint8_t));
+                if (colorMemory == NULL)
+                {
+                    Serial.println("Error allocating color memory");
+                    return false;
+                }
+                break;
+            case ROM_SOUND:
+                romType = ROM_SOUND;
+                soundMemorySize = roms[0].offset;
+                soundMemory = (uint8_t *)malloc(soundMemorySize * sizeof(uint8_t));
+                if (soundMemory == NULL)
+                {
+                    Serial.println("Error allocating sound memory");
+                    return false;
+                }
+                break;
+            }
             continue;
         }
-        if(roms[i].offset & ROMFLAG_DISPOSE) {
-
+        if (roms[i].offset & ROMFLAG_DISPOSE)
+        {
         }
 
         String name = String(roms[i].name);
@@ -137,8 +190,8 @@ bool Game::Initialize(SdCard &sdCard, String folder, RomModule roms[], uint32_t 
 
 bool Game::LoadRom(SdCard &sdCard, String folder, String filename, uint64_t size, uint64_t offset, uint32_t expectedCrc)
 {
-    //Serial.println("Loading ROM: " + filename);
-    //Serial.println("Loading ROM: " + folder + "/" + filename);
+    // Serial.println("Loading ROM: " + filename);
+    // Serial.println("Loading ROM: " + folder + "/" + filename);
     if (boardMemory == NULL)
     {
         Serial.println("Memory not initialized");
@@ -148,11 +201,11 @@ bool Game::LoadRom(SdCard &sdCard, String folder, String filename, uint64_t size
     {
         return false;
     }
-    if(expectedCrc != 0 && expectedCrc != GetCrc32(offset, size))
+    if (expectedCrc != 0 && expectedCrc != GetCrc32(offset, size))
     {
         Serial.println("Error: ROM CRC mismatch");
-        //return false;
+        // return false;
     }
-    //Serial.println("Loaded ROM: " + filename + " at offset: " + String(offset) + ", size: " + String(size) + ", crc: " + String(expectedCrc));
+    // Serial.println("Loaded ROM: " + filename + " at offset: " + String(offset) + ", size: " + String(size) + ", crc: " + String(expectedCrc));
     return true;
 }

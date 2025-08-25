@@ -6,6 +6,12 @@
 
 extern unsigned char *boardMemory;
 extern uint64_t boardMemorySize;
+extern unsigned char *gfxMemory;
+extern uint64_t gfxMemorySize;
+extern unsigned char *colorMemory;
+extern uint64_t colorMemorySize;
+extern unsigned char *soundMemory;
+extern uint64_t soundMemorySize;
 
 extern unsigned char *screenData;
 extern unsigned char *screenDataOld;
@@ -34,7 +40,7 @@ struct RomModule
 
 #define ROM_CPU               0x10000000           /* CPU ROM */
 #define ROM_GFX               0x20000000           /* Graphics ROM */
-#define ROM_SND               0x40000000           /* Sound ROM */
+#define ROM_SOUND             0x40000000           /* Sound ROM */
 #define ROM_COLOR             0x80000000           /* Color ROM */
 
 
@@ -43,7 +49,7 @@ struct RomModule
 #define ROM_START(name) RomModule name[] = {
 #define ROM_REGION(length) { 0, length, 0, ROM_CPU },
 #define ROM_REGION_GFX(length) { 0, length, 0, ROM_GFX },
-#define ROM_REGION_SND(length) { 0, length, 0, ROM_SND },
+#define ROM_REGION_SND(length) { 0, length, 0, ROM_SOUND },
 #define ROM_REGION_COLOR(length) { 0, length, 0, ROM_COLOR },
 #define ROM_REGION_DISPOSE(length) { 0, length, 0, ROMFLAG_DISPOSE },
 #define ROM_REGION_OPTIONAL(length) { 0, length, 0, ROMFLAG_IGNORE },

@@ -11,6 +11,8 @@
 #include <cstring>
 #include "SdCard.hpp"
 
+//#include <vector>
+
 class Game
 {
 public:
@@ -22,6 +24,10 @@ public:
 
     virtual void Button(bool isPressed) {};
 
+    //std::vector<RomModule> RomCpu;
+    //std::vector<RomModule> RomGfx;
+    //std::vector<RomModule> RomColor;
+    //std::vector<RomModule> RomSound;
 
 protected:
     bool isReady;
@@ -36,6 +42,7 @@ private:
     uint32_t crc32_table[256];
     void InitCrc32Table();
     uint32_t GetCrc32(uint64_t offset, uint64_t length);
+    unsigned int romType;
 
     //MemoryReadAddress *readMemory;
     //MemoryWriteAddress *writeMemory;
