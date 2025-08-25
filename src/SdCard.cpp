@@ -144,10 +144,10 @@ bool SdCard::LoadFile(String filename, uint64_t size, uint64_t offset)
         Serial.println("Failed to open file: " + filename);
         return false;
     }
-    uint64_t index = offset;
+    uint64_t index = 0;
     while (file.available() && index < size)
     {
-        boardMemory[index] = file.read();
+        boardMemory[index + offset] = file.read();
         index++;
     }
     file.close();

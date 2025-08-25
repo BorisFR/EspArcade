@@ -44,15 +44,15 @@ void Invaders::Setup(SdCard &sdCard)
             return;
         }
     }
-    if(LoadRom(sdCard, "si", "invaders.rom", 0x2000, 0, 0))
-    {
-        Serial.println("Invaders ROM loaded");
-    }
-    else
-    {
-        Serial.println("Error loading Invaders ROM");
-        return;
-    }
+    //if(LoadRom(sdCard, "si", "invaders.rom", 0x2000, 0, 0))
+    //{
+    //    Serial.println("Invaders ROM loaded");
+    //}
+    //else
+    //{
+    //    Serial.println("Error loading Invaders ROM");
+    //    return;
+    //}
     //SetMemoryReadAddresss(readmem);
     //SetMemoryWriteAddresss(writemem);
     cpu.Connect(this); //, this);
