@@ -5,8 +5,8 @@ Crystal is 40MHz
 USB mode: USB-Serial/JTAG
 MAC: 84:fc:e6:6d:5e:04
 
-RAM:   [=         ]   7.9% (used 25968 bytes from 327680 bytes)
-Flash: [=         ]   9.7% (used 634133 bytes from 6553600 bytes)
+RAM:   [=         ]   7.9% (used 26016 bytes from 327680 bytes)
+Flash: [=         ]   9.7% (used 634869 bytes from 6553600 bytes)
 */
 
 #ifdef ESP32
