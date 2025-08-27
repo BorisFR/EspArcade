@@ -2,16 +2,12 @@
 #define PACMAN_HPP
 
 #include "../../Game.hpp"
-//#include "../../cpu/z80cpp/z80.hpp"
-//#include "Pacman_rom.hpp"
 
-/*          rom       parent    machine   inp       init */
-// GAME(1980, pacman, 0, pacman, pacman, 0, ROT90, "Namco", "PuckMan (Japan set 1)")
 #define PACMAN_FOLDER "pacman"
 #define PACMAN_WIDTH 224
 #define PACMAN_HEIGHT 288
 
-#define PACMAN_RAMSIZE 8192
+/*
 #define INSTRUCTION_PER_FRAME 1
 
 #define PACMAN_DIP_FREE 0b00000000
@@ -34,6 +30,7 @@
 #define PACMAN_DIP_FREEZE 0b10000000
 
 #define PACMAN_DIP (PACMAN_DIP_NORMAL | PACMAN_DIP_B10K | PACMAN_DIP_LIVE3 | PACMAN_DIP_1C1P)
+*/
 
 class Pacman : public Game
 {
@@ -41,56 +38,29 @@ public:
     Pacman();
     ~Pacman() override;
 
-    //using Z80 = z80<Pacman>;
-
     void Setup(SdCard &sdCard) override;
     void Loop() override;
 
-    uint8_t read8(uint16_t addr);
-    void write8(uint16_t addr, uint8_t val);
-    uint16_t read16(uint16_t addr);
-    void write16(uint16_t addr, uint16_t val);
-
-    unsigned char RdZ80(unsigned short Addr);
-    void WrZ80(unsigned short Addr, unsigned char Value);
-    unsigned char InZ80(unsigned short Port);
-    void OutZ80(unsigned short Port, unsigned char Value);
-    //void PatchZ80(Z80 *R);
-
 private:
-    unsigned char irq_ptr = 0;
+    GfxLayout tileLayout = {
+        8, 8,                                                     /* 8*8 characters */
+        256,                                                      /* 256 characters */
+        2,                                                        /* 2 bits per pixel */
+        {0, 4},                                                   /* the two bitplanes for 4 pixels are packed into one byte */
+        {8 * 8 + 0, 8 * 8 + 1, 8 * 8 + 2, 8 * 8 + 3, 0, 1, 2, 3}, /* bits are packed in groups of four */
+        {0 * 8, 1 * 8, 2 * 8, 3 * 8, 4 * 8, 5 * 8, 6 * 8, 7 * 8},
+        16 * 8 /* every char takes 16 bytes */
+    };
+    GfxLayout spriteLayout = {
+        16, 16, /* 16*16 sprites */
+        64,     /* 64 sprites */
+        2,      /* 2 bits per pixel */
+        {0, 4}, /* the two bitplanes for 4 pixels are packed into one byte */
+        {8 * 8, 8 * 8 + 1, 8 * 8 + 2, 8 * 8 + 3, 16 * 8 + 0, 16 * 8 + 1, 16 * 8 + 2, 16 * 8 + 3, 24 * 8 + 0, 24 * 8 + 1, 24 * 8 + 2, 24 * 8 + 3, 0, 1, 2, 3},
+        {0 * 8, 1 * 8, 2 * 8, 3 * 8, 4 * 8, 5 * 8, 6 * 8, 7 * 8, 32 * 8, 33 * 8, 34 * 8, 35 * 8, 36 * 8, 37 * 8, 38 * 8, 39 * 8},
+        64 * 8 /* every sprite takes 64 bytes */
+    };
 
-    static constexpr int clockSpeed {static_cast<int>(3.072e6)}; // 3.072 MHz
-    static constexpr int cyclesPerFrame {clockSpeed / 60};
-    const int frameTime {static_cast<int>(1.0 / 60.0 * 1e3)};
-    int cycles {cyclesPerFrame};
-
-    const std::uint8_t dipswitch = 0b11001001; // game settings
-    std::uint8_t input0 {0b10011111}, input1 {0b11111111U}; // default cabinet mode is upright and board test is off
-    bool soundEnabled {false}, flipScreen {false};
-    bool interruptEnabled {false};
-
-    std::uint8_t spritePos[0x10] {};
-
-    // input constants
-    static constexpr std::uint8_t up {0b00000001U};
-    static constexpr std::uint8_t left {0b00000010U};
-    static constexpr std::uint8_t right {0b00000100U};
-    static constexpr std::uint8_t down {0b00001000U};
-    static constexpr std::uint8_t rackAdvance {0b00010000U};
-    static constexpr std::uint8_t test {0b00010000U};
-    static constexpr std::uint8_t coin1 {0b00100000U};
-    static constexpr std::uint8_t onePlayer {0b00100000U};
-    static constexpr std::uint8_t coin2 {0b01000000U};
-    static constexpr std::uint8_t twoPlayer {0b01000000U};
-    static constexpr std::uint8_t credit {0b10000000U};
-
-    // display constants
-    static constexpr std::uint32_t black {0xFF000000};
-    static constexpr int screenWidth {224};
-    static constexpr int screenHeight {288};
-    static constexpr int scaleFactor {3};
-    static constexpr int pitch {screenWidth * sizeof(std::uint32_t)};
 };
 
 #endif

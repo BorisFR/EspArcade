@@ -11,6 +11,7 @@
 #ifdef ESP32
 #include <Arduino_GFX_Library.h>
 
+/*
 #define PIN_DE 40
 #define PIN_HSYNC 39
 #define PIN_VSYNC 41
@@ -46,6 +47,16 @@
 #define SCREEN_AUTO_FLUSH true
 #define SCREEN_BACK_LIGHT 10
 #define SCREEN_ON LOW
+*/
+
+
+#define SCREEN_WIDTH 800
+#define SCREEN_HEIGHT 1200
+#define SCREEN_ROTATION 1
+#define SCREEN_AUTO_FLUSH true
+#define SCREEN_BACK_LIGHT 23
+#define SCREEN_ON HIGH
+
 #else
 #include "raylib.h"
 
@@ -81,6 +92,7 @@ public:
 
 private:
 #ifdef ESP32
+    /*
     Arduino_ESP32RGBPanel *rgbpanel = new Arduino_ESP32RGBPanel(
         PIN_DE, PIN_VSYNC, PIN_HSYNC, PIN_PCLK,
         PIN_R0, PIN_R1, PIN_R2, PIN_R3, PIN_R4,
@@ -90,6 +102,23 @@ private:
         VSYNC_POLARITY, VSYNC_FRONT_PORCH, VSYNC_PULSE_WIDTH, VSYNC_BACK_PORCH);
     Arduino_RGB_Display *gfx = new Arduino_RGB_Display(
         SCREEN_WIDTH, SCREEN_HEIGHT, rgbpanel, SCREEN_ROTATION, SCREEN_AUTO_FLUSH);
+        */
+Arduino_ESP32DSIPanel *dsipanel = new Arduino_ESP32DSIPanel(
+  20 /* hsync_pulse_width */,
+  20 /* hsync_back_porch */,
+  40 /* hsync_front_porch */,
+  4 /* vsync_pulse_width */,
+  8 /*vsync_back_porch  */,
+  20 /* vsync_front_porch */,
+  60000000 /* prefer_speed */);
+Arduino_DSI_Display *gfx = new Arduino_DSI_Display(
+  800 /* width */,
+  1280 /* height */,
+  dsipanel,
+  SCREEN_ROTATION /* rotation */,
+  true /* auto_flush */,
+  27 /* RST */,
+  jd9365_init_operations, sizeof(jd9365_init_operations) / sizeof(lcd_init_cmd_t));  
 #endif
     bool mustExit;
     unsigned long lastUpdate = 0;

@@ -1,8 +1,17 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
+#ifndef ESP32
+#include "../lib/Arduino.h"
+#else
+#include "Arduino.h"
+#endif
 #include <stdint.h>
 #include <stdlib.h>
+
+extern bool hasColor;
+extern bool hasPalette;
+
 
 extern unsigned char *boardMemory;
 extern uint64_t boardMemorySize;
@@ -12,6 +21,28 @@ extern unsigned char *colorMemory;
 extern uint64_t colorMemorySize;
 extern unsigned char *soundMemory;
 extern uint64_t soundMemorySize;
+extern unsigned char *paletteMemory;
+extern uint64_t paletteMemorySize;
+extern unsigned char *tileMemory;
+extern uint64_t tileMemorySize;
+extern unsigned char *spriteMemory;
+extern uint64_t spriteMemorySize;
+
+extern unsigned char *colorRed;
+extern unsigned char *colorGreen;
+extern unsigned char *colorBlue;
+extern uint64_t colorColorSize;
+extern unsigned char *paletteColor;
+extern uint64_t paletteColorSize;
+
+extern unsigned char *tileGfx;
+extern uint64_t tileWidth;
+extern uint64_t tileHeight;
+extern uint64_t tileNumber;
+extern unsigned char *spriteGfx;
+extern uint64_t spriteWidth;
+extern uint64_t spriteHeight;
+extern uint64_t spriteNumber;
 
 extern unsigned char *screenData;
 extern unsigned char *screenDataOld;
@@ -19,6 +50,12 @@ extern uint32_t screenWidth;
 extern uint32_t screenHeight;
 
 #define SIZEOF(arr) sizeof(arr) / sizeof(*arr)
+
+//extern int readbit(const unsigned char *src,int bitnum);
+static int readbit(const unsigned char *src,int bitnum)
+{
+	return (src[bitnum / 8] >> (7 - bitnum % 8)) & 1;
+}
 
 // https://github.com/Jean-MarcHarvengt/teensyMAME/blob/master/teensyMAMEClassic4/common.h
 struct RomModule
@@ -38,11 +75,13 @@ struct RomModule
 #define ROMFLAG_WIDE          0x40000000           /* 16-bit ROM; may need byte swapping */
 #define ROMFLAG_SWAP          0x20000000           /* 16-bit ROM with bytes in wrong order */
 
-#define ROM_CPU               0x10000000           /* CPU ROM */
-#define ROM_GFX               0x20000000           /* Graphics ROM */
-#define ROM_SOUND             0x40000000           /* Sound ROM */
-#define ROM_COLOR             0x80000000           /* Color ROM */
-
+#define ROM_CPU               0x00000001           /* CPU ROM */
+#define ROM_GFX               0x00000002           /* Graphics ROM */
+#define ROM_SOUND             0x00000004           /* Sound ROM */
+#define ROM_COLOR             0x00000008           /* Color ROM */
+#define ROM_PALETTE           0x00000010           /* Palette ROM */
+#define ROM_TILE              0x00000020           /* Tile ROM */
+#define ROM_SPRITE            0x00000040           /* Sprite ROM */
 
 // change are made, I add ROM_CPU/GFX/SND at the end
 //#define ROM_START(name) static struct RomModule name[] = {
@@ -51,6 +90,9 @@ struct RomModule
 #define ROM_REGION_GFX(length) { 0, length, 0, ROM_GFX },
 #define ROM_REGION_SND(length) { 0, length, 0, ROM_SOUND },
 #define ROM_REGION_COLOR(length) { 0, length, 0, ROM_COLOR },
+#define ROM_REGION_PALETTE(length) { 0, length, 0, ROM_PALETTE },
+#define ROM_REGION_TILE(length) { 0, length, 0, ROM_TILE },
+#define ROM_REGION_SPRITE(length) { 0, length, 0, ROM_SPRITE },
 #define ROM_REGION_DISPOSE(length) { 0, length, 0, ROMFLAG_DISPOSE },
 #define ROM_REGION_OPTIONAL(length) { 0, length, 0, ROMFLAG_IGNORE },
 #define ROM_LOAD(name,offset,length,crc) { name, offset, length, crc },
@@ -177,6 +219,60 @@ struct GameDriver
 						/* returns nonzero */
 	void (*hiscore_save)(void);	/* will not be called if hiscore_load() hasn't yet */
 						/* returned nonzero, to avoid saving an invalid table */
+};
+
+struct GfxLayout
+{
+	unsigned short width,height; /* width and height of chars/sprites */
+	unsigned int total; /* total numer of chars/sprites in the rom */
+	unsigned short planes; /* number of bitplanes */
+	int planeoffset[8]; /* start of every bitplane */
+	int xoffset[32]; /* coordinates of the bit corresponding to the pixel */
+	int yoffset[32]; /* of the given coordinates */
+	short charincrement; /* distance between two consecutive characters/sprites */
+};
+
+struct GfxDecodeInfo
+{
+	int memory_region;	/* memory region where the data resides (usually 1) */
+						/* -1 marks the end of the array */
+	int start;	/* beginning of data to decode */
+	struct GfxLayout *gfxlayout;
+	int color_codes_start;	/* offset in the color lookup table where color codes start */
+	int total_color_codes;	/* total number of color codes */
+};
+
+struct osd_bitmap
+{
+	int width,height;       /* width and height of the bitmap */
+	int depth;		/* bits per pixel - ASG 980209 */
+	//void *_private; /* don't touch! - reserved for osdepend use */
+	unsigned char **line; /* pointers to the start of each line */
+};
+
+#define SCREEN_DEPTH 16
+struct osd_bitmap *osd_new_bitmap(int width,int height,int depth);	/* ASG 980209 */
+#define osd_create_bitmap(w,h) osd_new_bitmap((w),(h),8)		/* ASG 980209 */
+void osd_clearbitmap(struct osd_bitmap *bitmap);
+void osd_free_bitmap(struct osd_bitmap *bitmap);
+
+struct GfxElement
+{
+	int width,height;
+
+	struct osd_bitmap *gfxdata;	/* graphic data */
+	unsigned int total_elements;	/* total number of characters/sprites */
+
+	int color_granularity;	/* number of colors for each color code */
+							/* (for example, 4 for 2 bitplanes gfx) */
+	unsigned short *colortable;	/* map color codes to screen pens */
+								/* if this is 0, the function does a verbatim copy */
+	int total_colors;
+	unsigned int *pen_usage;	/* an array of total_elements ints. */
+								/* It is a table of the pens each character uses */
+								/* (bit 0 = pen 0, and so on). This is used by */
+								/* drawgfgx() to do optimizations like skipping */
+								/* drawing of a totally transparent characters */
 };
 
 #endif

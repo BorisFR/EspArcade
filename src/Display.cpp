@@ -117,7 +117,8 @@ void Display::Loop()
     {
         keyCredit = false;
     }
-    if(screenHeight+screenWidth == 0) return;
+    if (screenHeight + screenWidth == 0)
+        return;
     BeginDrawing();
     ClearBackground(BLACK);
     for (uint16_t y = 0; y < screenHeight; y++)
@@ -134,6 +135,49 @@ void Display::Loop()
             DrawPixel(posX + 1, posY + 1, color);
         }
     }
+
+    uint16_t dimension = 40;
+    for (uint16_t c = 0; c < colorColorSize; c++)
+    {
+        Color color = (Color){colorRed[c], colorGreen[c], colorBlue[c], 255};
+        uint64_t posX = ((c) * dimension) % SCREEN_WIDTH;
+        uint64_t posY = 10 + (((c) * dimension) / SCREEN_WIDTH) * dimension;
+        for (uint32_t x = 0; x < dimension; x++)
+        {
+            for (uint32_t y = 0; y < dimension; y++)
+            {
+                DrawPixel(posX + x, posY + y, color);
+            }
+        }
+    }
+
+    for (uint16_t n = 0; n < tileNumber; n++)
+    {
+        for (uint32_t x = 0; x < tileWidth; x++)
+        {
+            for (uint32_t y = 0; y < tileHeight; y++)
+            {
+                uint32_t index = n * tileWidth + x + y * tileNumber;
+                Color color = (Color){tileGfx[index++], tileGfx[index++], tileGfx[index], 255};
+                // Color color = (tileGfx[index] < 127) ? BLACK : WHITE;
+                DrawPixel(x * tileWidth, y + DELTA_Y, color);
+            }
+        }
+    }
+
+    for (uint32_t n = 0; n < spriteNumber; n++)
+    {
+        for (uint32_t x = 0; x < spriteWidth; x++)
+        {
+            for (uint32_t y = 0; y < spriteHeight; y++)
+            {
+                uint32_t index = n * spriteWidth + x + y * spriteNumber;
+                Color color = (Color){spriteGfx[index++], spriteGfx[index++], spriteGfx[index], 255};
+                DrawPixel(x * spriteWidth, 50 + y + DELTA_Y, color);
+            }
+        }
+    }
+
     ClearRectangle(10, 70, 30, 20);
     Print(std::to_string(lastFrameCount), 10, 70);
     EndDrawing();

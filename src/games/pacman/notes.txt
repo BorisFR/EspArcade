@@ -1,0 +1,95 @@
+
+// https://github.com/Jean-MarcHarvengt/teensyMAME/blob/master/teensyMAMEClassic2/common.h#L122
+
+struct GfxLayout
+{
+	unsigned short width,height; /* width and height of chars/sprites */
+	unsigned int total; /* total numer of chars/sprites in the rom */
+	unsigned short planes; /* number of bitplanes */
+	int planeoffset[8]; /* start of every bitplane */
+	int xoffset[32]; /* coordinates of the bit corresponding to the pixel */
+	int yoffset[32]; /* of the given coordinates */
+	short charincrement; /* distance between two consecutive characters/sprites */
+};
+
+struct GfxDecodeInfo
+{
+	int memory_region;	/* memory region where the data resides (usually 1) */
+						/* -1 marks the end of the array */
+	int start;	/* beginning of data to decode */
+	struct GfxLayout *gfxlayout;
+	int color_codes_start;	/* offset in the color lookup table where color codes start */
+	int total_color_codes;	/* total number of color codes */
+};
+
+
+// https://github.com/Jean-MarcHarvengt/teensyMAME/blob/master/teensyMAMEClassic1/driver_pacman.c#L613
+
+static struct GfxLayout tilelayout =
+{
+	8,8,	/* 8*8 characters */
+    256,    /* 256 characters */
+    2,  /* 2 bits per pixel */
+    { 0, 4 },   /* the two bitplanes for 4 pixels are packed into one byte */
+    { 8*8+0, 8*8+1, 8*8+2, 8*8+3, 0, 1, 2, 3 }, /* bits are packed in groups of four */
+    { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+    16*8    /* every char takes 16 bytes */
+};
+
+static struct GfxLayout spritelayout =
+{
+	16,16,	/* 16*16 sprites */
+	64,	/* 64 sprites */
+	2,	/* 2 bits per pixel */
+	{ 0, 4 },	/* the two bitplanes for 4 pixels are packed into one byte */
+	{ 8*8, 8*8+1, 8*8+2, 8*8+3, 16*8+0, 16*8+1, 16*8+2, 16*8+3,
+			24*8+0, 24*8+1, 24*8+2, 24*8+3, 0, 1, 2, 3 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			32*8, 33*8, 34*8, 35*8, 36*8, 37*8, 38*8, 39*8 },
+	64*8	/* every sprite takes 64 bytes */
+};
+
+static struct GfxDecodeInfo gfxdecodeinfo[] =
+{
+	{ 1, 0x0000, &tilelayout,	0, 32 },
+	{ 1, 0x1000, &spritelayout, 0, 32 },
+	{ -1 } /* end of array */
+};
+
+static struct MachineDriver machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			18432000/6,	/* 3.072 Mhz */
+			0,
+			readmem,writemem,0,writeport,
+			pacman_interrupt,1
+		}
+	},
+	60, 2500,	/* frames per second, vblank duration */
+	1,	/* single CPU, no need for interleaving */
+	pacman_init_machine,
+
+	/* video hardware */
+	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
+	gfxdecodeinfo,
+	16, 4*32,
+	pacman_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	0,
+	pacman_vh_start,
+	generic_vh_stop,
+	pengo_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_NAMCO,
+			&namco_interface
+		}
+	}
+};
