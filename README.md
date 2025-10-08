@@ -1,6 +1,5 @@
 
-# EspArcade  
-
+# 🕹️ EspArcade  
 Emulateur logiciel en C / C++, basé sur le principe de M.A.M.E.  
 L'objectif est de réaliser un émulateur software pour un ESP32-P4. 
 
@@ -10,6 +9,11 @@ Ce projet existe en version PC Windows, nommé RayLibArcade pour pouvoir tester 
 
 > <ins>Auteur :</ins> Boris  
 <ins>Démarrage :</ins> Août 2025  
+
+| ** NON JOUABLE ACTUELLEMENT ** |  |
+| :--: | --- |  
+
+Il n'y a aucun control disponible pour le joueur 😊  
 
 ## ESP32-P4
 
