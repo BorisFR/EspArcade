@@ -5,7 +5,7 @@ L'objectif est de réaliser un émulateur software pour un ESP32-P4.
 
 Pour le moment, l'audio n'est pas du tout pris en compte. C'est une fonctionalité que je ne connais pas du tout, je n'ai jamais développé sur cette fonctionalité. Cela viendra plus tard quand j'aurai quelques jeux d'opérationnels.  
 
-Ce projet existe en version PC Windows, nommé RayLibArcade pour pouvoir tester mon code sans avoir l'Esp32P4 sous la main.  
+Ce projet existe en version PC Windows, nommé [RayLibArcade](https://github.com/BorisFR/RayLibArcade), pour pouvoir tester mon code sans avoir l'ESP32-P4 sous la main.  
 
 > <ins>Auteur :</ins> Boris  
 <ins>Démarrage :</ins> Août 2025  
@@ -13,7 +13,7 @@ Ce projet existe en version PC Windows, nommé RayLibArcade pour pouvoir tester 
 | ** NON JOUABLE ACTUELLEMENT ** |  |
 | :--: | --- |  
 
-Il n'y a aucun control disponible pour le joueur 😊  
+Il n'y a aucun control implémenté pour le joueur 😊  
 
 ## ESP32-P4
 
@@ -24,3 +24,9 @@ Il n'y a aucun control disponible pour le joueur 😊
 ## Jeux  
 
 ![Space Invaders](roms/RLarcade_invaders.png) ![Space Invaders Part II](roms/RLarcade_invadpt2.png) ![Pacman](roms/RLarcade_pacman.png) ![Frogger](roms/RLarcade_frogger.png)
+
+
+## Environnement de développement  
+
+Le code est réalisé sous Visual Studio Code avec le framework espressif ESP-IDF.  
+Pour la petite histoire : j'étais un utilisateur de platformio mais à cause de la mésentante des deux sociétés, les derniers modèles de chez espressif ne sont plus utilisable dans platformio. Il y a bien une tentative de la communauté de faire l'équivalent de platformio qui continue le support de espressif, notament en utilisant le framework arduino, mais j'ai échoué à le mettre en place. Ce développement est donc en pur espressif ESP-IDF.    
