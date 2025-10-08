@@ -1,0 +1,20 @@
+Command: cmake -G Ninja -DPYTHON_DEPS_CHECKED=1 -DPYTHON=C:\Users\sfard\.espressif\python_env\idf5.5_py3.11_env\Scripts\python.exe -DESP_PLATFORM=1 -DSDKCONFIG='d:\DEV\EspArcade\sdkconfig' -DCCACHE_ENABLE=1 D:\DEV\EspArcade
+CMake Error at C:/Users/sfard/esp/v5.5/esp-idf/tools/cmake/component.cmake:491 (add_library):
+  Cannot find source file:
+
+    D:/DEV/EspArcade/main/TheTouch.cpp
+
+  Tried extensions .c .C .c++ .cc .cpp .cxx .cu .mpp .m .M .mm .ixx .cppm
+  .ccm .cxxm .c++m .h .hh .h++ .hm .hpp .hxx .in .txx .f .F .for .f77 .f90
+  .f95 .f03 .hip .ispc
+Call Stack (most recent call first):
+  main/CMakeLists.txt:2 (idf_component_register)
+
+
+CMake Error at C:/Users/sfard/esp/v5.5/esp-idf/tools/cmake/component.cmake:491 (add_library):
+  No SOURCES given to target: __idf_main
+Call Stack (most recent call first):
+  main/CMakeLists.txt:2 (idf_component_register)
+
+
+CMake Generate step failed.  Build files cannot be regenerated correctly.

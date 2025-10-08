@@ -1,0 +1,2 @@
+source D:/DEV/EspArcade/build/bootloader/gdbinit/symbols
+source D:/DEV/EspArcade/build/bootloader/gdbinit/connect
