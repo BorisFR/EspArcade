@@ -10,8 +10,8 @@ Ce projet existe en version PC Windows, nommé [RayLibArcade](https://github.com
 > <ins>Auteur :</ins> Boris  
 <ins>Démarrage :</ins> Août 2025  
 
-| ** NON JOUABLE ACTUELLEMENT ** |  |
-| :--: | --- |  
+| ** NON JOUABLE ACTUELLEMENT ** |
+| :--: | 
 
 Il n'y a aucun control implémenté pour le joueur 😊  
 
