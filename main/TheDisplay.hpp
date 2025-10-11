@@ -113,8 +113,8 @@
 // #define DEBUG_DISPLAY_SPRITES
 
 // #define LIMIT_FPS
-// #define NO_FPS
-#define NO_FPS_ON_CONSOLE
+ //#define NO_FPS
+//#define NO_FPS_ON_CONSOLE
 
 class TheDisplay
 {

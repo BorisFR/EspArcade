@@ -1,3 +1,59 @@
+Dans ESP PSRAM
+Enable Executable in place from (XiP) from PSRAM feature
+KCONFIG Name: SPIRAM_XIP_FROM_PSRAM décoché, le reboot plantage fait que ls sd est ok.
+==> change le flash !
+│ Flash               │       471364 │          │                │               │
+│    .text            │       356856 │          │                │               │
+│    .rodata          │       113996 │          │                │               │
+│    .init_array      │          256 │          │                │               │
+│    .appdesc         │          256 │          │                │               │
+
+test dans ESP System Setting / Memory protection
+Enable IRAM/DRAM split protection
+KCONFIG Name: ESP_SYSTEM_PMP_IDRAM_SPLIT
+
+Core  0 register dump:
+MEPC    : 0x0000e6e6  RA      : 0x4801a878  SP      : 0x4ff214f0  GP      : 0x4ff14400
+--- 0x4801a878: I8085_Execute at D:/DEV/EspArcade/main/machines/CpuI8085.c:1224
+TP      : 0x4ff21590  T0      : 0x4fc10cc4  T1      : 0x00000098  T2      : 0x00000000
+--- 0x4fc10cc4: Cache_Start_L2_Cache_Preload in ROM
+
+Stack memory:
+4ff214f0: 0x00000000 0x48064124 0x48064124 0x48064124 0x4ff1d000 0x48064124 0x4ff1b000 0x4800eeda
+--- 0x4800eeda: MachineDriver8080bw::Loop(TheDisplay&) at D:/DEV/EspArcade/main/machines/MachineDriver8080bw.cpp:30
+4ff21510: 0x48064000 0x00000000 0x00000000 0x4800aaca 0x48064000 0x48064124 0x00000b2f 0x4800acd4
+--- 0x4800aaca: loop() at D:/DEV/EspArcade/main/main.cpp:79
+--- 0x4800acd4: app_main at D:/DEV/EspArcade/main/main.cpp:132
+
+
+W (1003) i2c: This driver is an old driver, please migrate your application code to adapt `driver/i2c_master.h`
+
+                            Memory Type Usage Summary                             
+┏━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
+┃ Memory Type/Section ┃ Used [bytes] ┃ Used [%] ┃ Remain [bytes] ┃ Total [bytes] ┃
+┡━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
+│ External RAM        │       463804 │     0.35 │      133753892 │     134217696 │
+│    .text            │       349920 │     0.26 │                │               │
+│    .rodata          │       113372 │     0.08 │                │               │
+│    .init_array      │          256 │      0.0 │                │               │
+│    .appdesc         │          256 │      0.0 │                │               │
+│ DIRAM               │       120431 │    27.04 │         324961 │        445392 │
+│    .text            │        80862 │    18.16 │                │               │
+│    .data            │        23893 │     5.36 │                │               │
+│    .bss             │        15676 │     3.52 │                │               │
+│ HP core RAM         │          104 │     1.27 │           8088 │          8192 │
+│    .data            │           60 │     0.73 │                │               │
+│    .text            │           44 │     0.54 │                │               │
+│ LP RAM              │           24 │     0.07 │          32744 │         32768 │
+│    .rtc_reserved    │           24 │     0.07 │                │               │
+└─────────────────────┴──────────────┴──────────┴────────────────┴───────────────┘
+
+I (2918) Main: Free heap size: 30421000
+I (2918) Main: Free heap size (caps): 30453031
+I (2921) Main: Free heap size (caps) INTERNAL: 363563
+I (2926) Main: Free heap size (caps) DMA: 323951
+I (2930) Main: Free heap size (caps) SPIRAM: 30089468
+
 I (27) boot: ESP-IDF v5.5 2nd stage bootloader
 I (28) boot: compile time Sep 24 2025 15:20:37
 I (28) boot: Multicore bootloader

@@ -69,6 +69,7 @@ void setup()
   uint32_t zoomFactor = MIN(display.GetMaxZoomX(), display.GetMaxZoomY());
   if (zoomFactor == 0)
     MY_DEBUG2TEXT(TAG, "*** ERROR ***", "Zoom is 0")
+  //zoomFactor=1;
   display.SetDisplayForGame(zoomFactor, zoomFactor, display.GetPaddingLeftForZoom(zoomFactor), display.GetPaddingTopForZoom(zoomFactor));
 }
 

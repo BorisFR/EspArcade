@@ -30,3 +30,59 @@ Il n'y a aucun control implémenté pour le joueur 😊
 
 Le code est réalisé sous Visual Studio Code avec le framework espressif ESP-IDF.  
 Pour la petite histoire : j'étais un utilisateur de platformio mais à cause de la mésentante des deux sociétés, les derniers modèles de chez espressif ne sont plus utilisable dans platformio. Il y a bien une tentative de la communauté de faire l'équivalent de platformio qui continue le support de espressif, notament en utilisant le framework arduino, mais j'ai échoué à le mettre en place. Ce développement est donc en pur espressif ESP-IDF.    
+
+## Performances  
+
+Mesures effectuées sans limite activée.  
+
+| 🕹️ Jeu  | Nom du<br>dossier | Gameplay | Audio | FPS  | Screen dirty<br>Implemented | C.P.U. |
+| :--- | :--- | :--- | :--- | ---: | :--- | :--- |
+| Space Invaders | invaders | ✅ | ❌ | 230 | 🟢 | i8080 |
+| Space Invaders Part II | invadpt2 | ✅ | ❌ | 230 | 🟢 | i8080 |
+| Pacman | pacman | ✅ | ❌ | 55 | 🔴 | z80 |
+| Frogger | frogger | ❌ | ❌ | 38 | 🔴 | 2 x z80 |
+
+# Structure des dossiers de la carte SD
+
+
+```
+├── frogger
+│   ├── frogger.26
+│   ├── frogger.27
+│   ├── frogger.606
+│   ├── frogger.607
+│   ├── frogger.608
+│   ├── frogger.609
+│   ├── frogger.610
+│   ├── frsm3.7
+│   └── pr-91.6l
+├── invaders
+│   ├── invaders.e
+│   ├── invaders.f
+│   ├── invaders.g
+│   └── invaders.h
+├── invadpt2
+│   ├── pv01
+│   ├── pv02
+│   ├── pv03
+│   ├── pv04
+│   ├── pv05
+│   ├── pv06.1
+│   └── pv07.2
+├── pacman
+│   ├── 82s123.7f
+│   ├── 82s126.1m
+│   ├── 82s126.3m
+│   ├── 82s126.4a
+│   ├── pacman.5e
+│   ├── pacman.5f
+│   ├── pacman.6e
+│   ├── pacman.6f
+│   ├── pacman.6h
+│   └── pacman.6j
+└── cab
+│   ├── frogger.png
+│   ├── invaders.png
+│   ├── invadpt2.png
+│   └── pacman.png
+```
