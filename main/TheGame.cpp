@@ -323,14 +323,14 @@ void TheGame::Setup(TheDisplay &display, TheSdCard &sdCard)
         }
         countMemoryWriteFunction++;
     }
-    //uint8_t buttons[] = {BUTTON_RIGHT, BUTTON_LEFT, BUTTON_DOWN, BUTTON_UP};
-    //for (uint8_t k = 0; k < 4; k++)
+    // uint8_t buttons[] = {BUTTON_RIGHT, BUTTON_LEFT, BUTTON_DOWN, BUTTON_UP};
+    // for (uint8_t k = 0; k < 4; k++)
     //{
-    //    keyPressed[buttons[k]] = true;
-    //    KeyChange(buttons[k]);
-    //    keyPressed[buttons[k]] = false;
-    //    KeyChange(buttons[k]);
-    //}
+    //     keyPressed[buttons[k]] = true;
+    //     KeyChange(buttons[k]);
+    //     keyPressed[buttons[k]] = false;
+    //     KeyChange(buttons[k]);
+    // }
     isReady = true;
 }
 
@@ -393,7 +393,7 @@ bool TheGame::Initialize(TheDisplay &display, TheSdCard &sdCard)
         return false;
     }
     memset(screenData, 0, screenLength);
-    screenDataOld = (THE_COLOR *)malloc(screenWidth * screenHeight * sizeof(THE_COLOR));
+    screenDataOld = (THE_COLOR *)malloc(screenLength);
     if (screenDataOld == NULL)
     {
         MY_DEBUG(TAG, "Error allocating old screen memory");
@@ -612,8 +612,8 @@ bool TheGame::DecodeColors(TheDisplay &display)
         uint8_t green = (uint8_t)((((colorByte >> 3U) & 0b1) * 0x21) + (((colorByte >> 4U) & 0b1) * 0x47) + (((colorByte >> 5U) & 0b1) * 0x97));
         uint8_t blue = (uint8_t)((((colorByte >> 6U) & 0b1) * 0x51) + (((colorByte >> 7U) & 0b1) * 0xAE));
         colorRGB[c] = display.Rgb888ToRgb565(red, green, blue);
-        // std::string t = std::to_string(red) + "/" + std::to_string(green) + "/" + std::to_string(blue) + " => " + std::to_string(colorRGB[c]);
-        // MY_DEBUG(TAG, t.c_str())
+         std::string t = std::to_string(red) + "/" + std::to_string(green) + "/" + std::to_string(blue) + " => " + std::to_string(colorRGB[c]);
+         MY_DEBUG(TAG, t.c_str())
     }
     return true;
 }
