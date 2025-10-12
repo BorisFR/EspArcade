@@ -28,19 +28,19 @@ Il n'y a aucun control implémenté pour le joueur 😊
 
 ## Environnement de développement  
 
-Le code est réalisé sous Visual Studio Code avec le framework espressif ESP-IDF.  
-Pour la petite histoire : j'étais un utilisateur de platformio mais à cause de la mésentante des deux sociétés, les derniers modèles de chez espressif ne sont plus utilisable dans platformio. Il y a bien une tentative de la communauté de faire l'équivalent de platformio qui continue le support de espressif, notament en utilisant le framework arduino, mais j'ai échoué à le mettre en place. Ce développement est donc en pur espressif ESP-IDF.    
+Le code est réalisé sous Visual Studio Code avec le framework espressif ESP-IDF, en C & C++S.  
+Pour la petite histoire : j'étais un utilisateur de platformio mais à cause de la mésentante des deux sociétés, les derniers modèles de chez espressif ne sont plus utilisable dans platformio. Il y a bien une tentative de la communauté de faire l'équivalent de platformio pour continuee le support de espressif, notament en utilisant le framework arduino, mais j'ai échoué à le mettre en place. Pour moi c'était le signal de basculer le développement en pur espressif ESP-IDF.    
 
 ## Performances  
 
-Mesures effectuées sans limite activée.  
+Mesures effectuées sans limite activée, chaque jeu a une résolution qui est doublée en largeur et hauteur.  
 
-| 🕹️ Jeu  | Nom du<br>dossier | Gameplay | Audio | FPS  | Screen dirty<br>Implemented | C.P.U. |
+| 🕹️ Jeu | Nom du<br>dossier | Gameplay | Audio | FPS | Screen dirty<br>Implemented | C.P.U. |
 | :--- | :--- | :--- | :--- | ---: | :--- | :--- |
-| Space Invaders | invaders | ✅ | ❌ | 230 | 🟢 | i8080 |
-| Space Invaders Part II | invadpt2 | ✅ | ❌ | 230 | 🟢 | i8080 |
-| Pacman | pacman | ✅ | ❌ | 55 | 🔴 | z80 |
-| Frogger | frogger | ❌ | ❌ | 38 | 🔴 | 2 x z80 |
+| Space Invaders | invaders | ✅ | ❌ | 250 | 🟢 | i8080 |
+| Space Invaders Part II | invadpt2 | ✅ | ❌ | 250 | 🟢 | i8080 |
+| Pacman | pacman | ✅ | ❌ | 50 | 🔴 | z80 |
+| Frogger | frogger | ❌ | ❌ | 35 | 🔴 | 2 x z80 |
 
 # Structure des dossiers de la carte SD
 
@@ -80,7 +80,7 @@ Mesures effectuées sans limite activée.
 │   ├── pacman.6f
 │   ├── pacman.6h
 │   └── pacman.6j
-└── cab
+└── marquee
 │   ├── frogger.png
 │   ├── invaders.png
 │   ├── invadpt2.png

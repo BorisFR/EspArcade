@@ -8,10 +8,10 @@ uint8_t maxp = 0;
 
 void GameDrawElement(THE_COLOR *screenData, uint32_t atX, uint32_t atY, bool flipX, bool flipY, uint16_t tileIndex, uint8_t paletteIndex, uint8_t blackIsTransparent, THE_COLOR replacedColor)
 {
-    DIRTY_MIN(atX, screenDirtyMinX)
-    DIRTY_MAX(atX + element->width, screenDirtyMaxX)
-    DIRTY_MIN(atY, screenDirtyMinY)
-    DIRTY_MAX(atY + element->height, screenDirtyMaxY)
+    // DIRTY_MIN(atX, screenDirtyMinX)
+    // DIRTY_MAX(atX + element->width, screenDirtyMaxX)
+    // DIRTY_MIN(atY, screenDirtyMinY)
+    // DIRTY_MAX(atY + element->height, screenDirtyMaxY)
     if (flipX && flipY)
     { // FLIP X & FLIP Y
         for (uint16_t y = 0; y < element->height; y++)
@@ -25,6 +25,7 @@ void GameDrawElement(THE_COLOR *screenData, uint32_t atX, uint32_t atY, bool fli
                     uint16_t tempX = atX + element->width - x;
                     if (tempX >= visibleArea.minX && tempX < visibleArea.maxX)
                     {
+                        CHECK_IF_DIRTY_XY(tempX, tempY)
                         uint8_t pixel = pointerLine[x];
                         THE_COLOR color = paletteColor[paletteIndex * 4 + pixel];
                         if (blackIsTransparent == TRANSPARENCY_REPLACE && color == 255)
@@ -57,6 +58,7 @@ void GameDrawElement(THE_COLOR *screenData, uint32_t atX, uint32_t atY, bool fli
                         uint16_t tempX = atX + element->width - x;
                         if (tempX >= visibleArea.minX && tempX < visibleArea.maxX)
                         {
+                            CHECK_IF_DIRTY_XY(tempX, tempY)
                             uint8_t pixel = pointerLine[x];
                             THE_COLOR color = paletteColor[paletteIndex * 4 + pixel];
                             if (blackIsTransparent == TRANSPARENCY_REPLACE && color == 255)
@@ -89,6 +91,7 @@ void GameDrawElement(THE_COLOR *screenData, uint32_t atX, uint32_t atY, bool fli
                             uint16_t tempX = x + atX;
                             if (tempX >= visibleArea.minX && tempX < visibleArea.maxX)
                             {
+                                CHECK_IF_DIRTY_XY(tempX, tempY)
                                 uint8_t pixel = pointerLine[x];
                                 THE_COLOR color = paletteColor[paletteIndex * 4 + pixel];
                                 if (blackIsTransparent == TRANSPARENCY_REPLACE && color == 255)
@@ -119,6 +122,7 @@ void GameDrawElement(THE_COLOR *screenData, uint32_t atX, uint32_t atY, bool fli
                             uint16_t tempX = x + atX;
                             if (tempX >= visibleArea.minX && tempX < visibleArea.maxX)
                             {
+                                CHECK_IF_DIRTY_XY(tempX, tempY)
                                 uint8_t pixel = pointerLine[x];
                                 if (pixel > maxp)
                                 {
@@ -208,55 +212,55 @@ WriteHandler *memoryWriteHandler;
 
 int readMemoryHandler(int address)
 {
-    if (address < 0)
-    {
-        //MY_DEBUG2("MEMORY READ ERROR", "address neg:", address)
-        ESP_LOGE("MEMORY READ ERROR", "address neg: %x", address);
-        return 0;
-    }
-    if (address >= boardMemorySize)
-    {
-        //MY_DEBUG2("MEMORY READ ERROR", "address:", address)
-        ESP_LOGE("MEMORY READ ERROR", "address: %x", address);
-        return 0;
-    }
-    if (memoryReadHandler == NULL)
-    {
-        //MY_DEBUG2("MEMORY READ ERROR", "memoryReadHandler is NULL:", address)
-        ESP_LOGE("MEMORY READ ERROR", "memoryReadHandler NULL : %x", address);
-        return 0;
-    }
+    // if (address < 0)
+    // {
+    //     //MY_DEBUG2("MEMORY READ ERROR", "address neg:", address)
+    //     ESP_LOGE("MEMORY READ ERROR", "address neg: %x", address);
+    //     return 0;
+    // }
+    // if (address >= boardMemorySize)
+    // {
+    //     //MY_DEBUG2("MEMORY READ ERROR", "address:", address)
+    //     ESP_LOGE("MEMORY READ ERROR", "address: %x", address);
+    //     return 0;
+    // }
+    // if (memoryReadHandler == NULL)
+    // {
+    //     //MY_DEBUG2("MEMORY READ ERROR", "memoryReadHandler is NULL:", address)
+    //     ESP_LOGE("MEMORY READ ERROR", "memoryReadHandler NULL : %x", address);
+    //     return 0;
+    // }
     if (memoryReadHandler[address].handler == NULL)
     {
         return boardMemory[address];
         //MY_DEBUG2("MEMORY READ ERROR", "memoryReadHandler handler is NULL:", address)
         //ESP_LOGE("MEMORY READ ERROR", "handler NULL : %x", address);
         //return 0;
-    }
-    if (memoryReadHandler[address].handler != NULL)
+    } else
+    //if (memoryReadHandler[address].handler != NULL)
     {
         return memoryReadHandler[address].handler(address);
     }
-    return boardMemory[address];
+    //return boardMemory[address];
 }
 
 void writeMemoryHandler(int address, int value)
 {
-    if (address < 0)
-    {
-        MY_DEBUG2("MEMORY WRITE ERROR", "address neg:", address)
-        return;
-    }
-    if (address >= boardMemorySize)
-    {
-        MY_DEBUG2("MEMORY WRITE ERROR", "address:", address)
-        return;
-    }
-    if (memoryWriteHandler == NULL)
-    {
-        MY_DEBUG2("MEMORY WRITE ERROR", "memoryWriteHandler is NULL:", address)
-        return;
-    }
+    // if (address < 0)
+    // {
+    //     MY_DEBUG2("MEMORY WRITE ERROR", "address neg:", address)
+    //     return;
+    // }
+    // if (address >= boardMemorySize)
+    // {
+    //     MY_DEBUG2("MEMORY WRITE ERROR", "address:", address)
+    //     return;
+    // }
+    // if (memoryWriteHandler == NULL)
+    // {
+    //     MY_DEBUG2("MEMORY WRITE ERROR", "memoryWriteHandler is NULL:", address)
+    //     return;
+    // }
     if (memoryWriteHandler[address].handler != NULL)
     {
         memoryWriteHandler[address].handler(address, value);
@@ -274,7 +278,7 @@ uint8_t keyPort[BUTTON_END + 1];
 // Input port bit number
 uint8_t keyBit[BUTTON_END + 1];
 // Input port default value
-bool keyValuePressed[BUTTON_END + 1];
+uint8_t keyValuePressed[BUTTON_END + 1];
 
 bool IsKeyChanged(uint8_t button)
 {
