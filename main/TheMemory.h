@@ -28,7 +28,8 @@
 #define THE_COLOR uint32_t
 #endif
 
-#define MAX_GFX_ELEMENTS 32
+#define MAX_GFX_ELEMENTS 5
+//#define MAX_GFX_ELEMENTS 32
 // #define MAX_MEMORY_REGIONS 10
 
 // https://github.com/squidrpi/mame4all-pi/blob/bf71c5fdd2e2bbdccb36995e918b99ae7b01dc7a/src/memory.h#L253
@@ -71,6 +72,12 @@ extern WriteHandler *memoryWriteHandler;
 
 #include "machines/mb14241.h"
 
+#define PNG_PTR_TYPE uint16_t
+extern PNG_PTR_TYPE *pngImage;
+extern uint32_t pngMemorySize;
+extern uint32_t pngWidth;
+extern uint32_t pngHeight;
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -100,10 +107,14 @@ extern "C"
 
 	extern THE_COLOR froggerWater;
 
-#define CHECK_IF_DIRTY_X(x) DIRTY_MIN(x, screenDirtyMinX) DIRTY_MAX(x, screenDirtyMaxX)
-#define CHECK_IF_DIRTY_Y(y) DIRTY_MIN(y, screenDirtyMinY) DIRTY_MAX(y, screenDirtyMaxY)
+#define CHECK_IF_DIRTY_X(x) DIRTY_MIN(x, screenDirtyMinX) DIRTY_MAX(x+1, screenDirtyMaxX)
+#define CHECK_IF_DIRTY_Y(y) DIRTY_MIN(y, screenDirtyMinY) DIRTY_MAX(y+1, screenDirtyMaxY)
 #define CHECK_IF_DIRTY_XY(x, y) CHECK_IF_DIRTY_X(x) CHECK_IF_DIRTY_Y(y)
 
+	extern uint16_t screenPosX;
+	extern uint16_t screenPosY;
+
+	extern void GameScrollLine(uint32_t line, uint32_t scroll, uint16_t height);
 	extern void GameDrawElement(THE_COLOR *theScreen, uint32_t atX, uint32_t atY, bool flipX, bool flipY, uint16_t tileIndex, uint8_t paletteIndex, uint8_t blackIsTransparent, THE_COLOR replacedColor);
 
 	extern uint8_t Z80InterruptVector[MAX_Z80_CPU];
@@ -191,7 +202,7 @@ extern "C"
 	extern uint8_t *dirtyMemorySprites;
 
 	extern THE_COLOR *colorRGB;
-	extern uint16_t paletteColorSize;
+	extern uint32_t paletteColorSize;
 	extern THE_COLOR *paletteColor;
 
 	extern struct GfxElement *element;
@@ -205,10 +216,12 @@ extern "C"
 	extern uint16_t spriteHeight;
 	extern uint16_t spritesCount;
 
-	extern struct GfxElement *allGfx[2];
+	extern uint8_t countGfxElement;
+	extern struct GfxElement *allGfx[MAX_GFX_ELEMENTS];
 
 	extern THE_COLOR *screenData;
 	extern THE_COLOR *screenDataOld;
+	extern THE_COLOR *screenBitmap;
 	extern uint32_t screenWidth;
 	extern uint32_t screenHeight;
 	extern uint32_t screenLength;

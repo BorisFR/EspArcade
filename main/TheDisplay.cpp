@@ -11,7 +11,7 @@ void touchCallBack(esp_lcd_touch_handle_t tp)
     lastTouch = millis();
     if (touchedInProgress)
         return;
-    //esp_rom_printf("Touch interrupt callback\n");
+    // esp_rom_printf("Touch interrupt callback\n");
     touched = true;
     touchedInProgress = true;
 }
@@ -161,7 +161,7 @@ void TheDisplay::Setup()
     fb_image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
     fb_texture = LoadTextureFromImage(fb_image);
 #ifdef LIMIT_FPS
-    SetTargetFPS(60);
+    SetTargetFPS(FPS_LIMIT);
 #endif
 #endif
     myWhite = Rgb888ToRgb565(255, 255, 255);
@@ -192,6 +192,11 @@ void TheDisplay::SetDisplayForGame(uint32_t zoomX, uint32_t zoomY, uint32_t atX,
     screenPosY = atY;
 }
 
+void TheDisplay::SetVerticalPositionForGame(uint32_t y)
+{
+    screenPosY = y;
+}
+
 // *******************************************************************
 
 uint32_t TheDisplay::GetMaxZoomX() { return SCREEN_WIDTH / screenWidth; }
@@ -206,7 +211,61 @@ uint32_t TheDisplay::GetPaddingLeftForZoom(uint32_t zoomX) { return (SCREEN_WIDT
 
 // *******************************************************************
 
+
+#ifdef ESP32P4
+THE_COLOR TheDisplay::ConvertRGB565ToRGB888(uint16_t color565)
+{
+    return color565;
+}
+#else
+Color TheDisplay::ConvertRGB565ToRGB888(uint16_t color565)
+{
+    // Extract the red, green, and blue components
+    unsigned char r = (color565 >> 11) & 0x1F; // 5 bits for red
+    unsigned char g = (color565 >> 5) & 0x3F;  // 6 bits for green
+    unsigned char b = color565 & 0x1F;         // 5 bits for blue
+
+    // Scale them to 8-bit values (0-255)
+    r = (r * 255) / 31;
+    g = (g * 255) / 63;
+    b = (b * 255) / 31;
+    // Return as a raylib Color struct
+    return (Color){r, g, b, 255}; // Alpha is set to 255 (fully opaque)
+}
+
+// Color TheDisplay::ConvertRGB888ToRGBA8888(uint32_t rgb888)
+// {
+//     // Extract the red, green, and blue components
+//     uint8_t red = (rgb888 >> 16) & 0xFF;
+//     uint8_t green = (rgb888 >> 8) & 0xFF;
+//     uint8_t blue = rgb888 & 0xFF;
+//     // Add the alpha channel (e.g., 255 for full opacity)
+//     uint8_t alpha = 0xFF;
+//     // Combine into RGBA8888 format
+//     // uint32_t rgba8888 = (red << 24) | (green << 16) | (blue << 8) | alpha;
+//     // return rgba8888;
+//     return Color{red, green, blue, alpha};
+// }
+#endif
+
 uint32_t TheDisplay::GetPaddingTopForZoom(uint32_t zoomY) { return (SCREEN_HEIGHT - (screenHeight * zoomY)) / 2; }
+
+void TheDisplay::DisplayPng(uint32_t atX, uint32_t atY)
+{
+    for (uint32_t x = 0; x < pngWidth; x++)
+    {
+        for (uint32_t y = 0; y < pngHeight; y++)
+        {
+            uint32_t pos = atX + x + (atY + y) * SCREEN_WIDTH;
+            uint32_t index = x + y * pngWidth;
+#ifdef ESP32P4
+            fbs[currentFrameBuffer][pos] = pngImage[index];
+#else
+            pixels[pos] = ConvertRGB565ToRGB888(pngImage[index]);
+#endif
+        }
+    }
+}
 
 // *******************************************************************
 
@@ -237,7 +296,7 @@ void TheDisplay::Loop()
         if (millis() - lastTouch > TOUCH_DELAY_RELEASED)
         {
             touchedInProgress = false;
-            //esp_rom_printf("Touch release\n");
+            // esp_rom_printf("Touch release\n");
             if (touchX < SCREEN_WIDTH / 2)
             {
                 KEY_RELEASED(BUTTON_CREDIT)
@@ -251,8 +310,8 @@ void TheDisplay::Loop()
         {
             if (touch.getTouch(&touchX, &touchY))
             {
-                //std::string temp = std::to_string(touchX) + " / " + std::to_string(touchY);
-                //MY_DEBUG2TEXT(TAG, "Moving X:", temp.c_str())
+                // std::string temp = std::to_string(touchX) + " / " + std::to_string(touchY);
+                // MY_DEBUG2TEXT(TAG, "Moving X:", temp.c_str())
             }
         }
     }
@@ -261,8 +320,8 @@ void TheDisplay::Loop()
         touched = false;
         if (touch.getTouch(&touchX, &touchY))
         {
-            //std::string temp = std::to_string(touchX) + " / " + std::to_string(touchY);
-            //MY_DEBUG2TEXT(TAG, "Touch X:", temp.c_str())
+            // std::string temp = std::to_string(touchX) + " / " + std::to_string(touchY);
+            // MY_DEBUG2TEXT(TAG, "Touch X:", temp.c_str())
             if (touchX < SCREEN_WIDTH / 2)
             {
                 KEY_PRESSED(BUTTON_CREDIT)
@@ -350,35 +409,26 @@ void TheDisplay::Loop()
     if (screenHeight + screenWidth == 0)
         return;
     BeginDrawing();
-    // because RAYLIB use double buffering
-    ClearBackground(BLACK);
-    // screenDirtyMaxX = screenWidth;
-    // screenDirtyMinX = 0;
-    // screenDirtyMaxY = screenHeight;
-    // screenDirtyMinY = 0;
+    // ClearBackground(BLACK);
+    // ClearBackground(GREEN);
 #endif
-    screenDirtyMaxX++;
-    screenDirtyMaxY++;
-    if (screenDirtyMaxX >= screenWidth)
-        screenDirtyMaxX = screenWidth - 1;
-    if (screenDirtyMaxY >= screenHeight)
-        screenDirtyMaxY = screenHeight - 1;
-
-    // if(screenDirtyMaxX > screenWidth)  screenDirtyMaxX = screenWidth;
-    // if(screenDirtyMaxY > screenHeight) screenDirtyMaxY = screenHeight;
+    // if(screenDirtyMinX > 0) screenDirtyMinX--;
+    // if(screenDirtyMinY > 0) screenDirtyMinY--;
+    //screenDirtyMaxX++;
+    //screenDirtyMaxY++;
+    //if (screenDirtyMaxX > screenWidth)
+    //    screenDirtyMaxX = screenWidth;
+    //if (screenDirtyMaxY > screenHeight)
+    //    screenDirtyMaxY = screenHeight;
     //  DRAW SCREEN
-    // screenDirtyMaxX = screenWidth; screenDirtyMinX = 0; screenDirtyMaxY = screenHeight; screenDirtyMinY = 0;
-    // screenPosX=0;screenPosY=0;screenZoomX=1;screenZoomY=1;
     //  currentFrameBuffer = (currentFrameBuffer + 1) % SCREEN_FRAME_BUFFER;
     uint32_t index = 0;
-    // for (uint32_t y = 0; y < screenHeight; y++)
     for (uint32_t y = screenDirtyMinY; y < screenDirtyMaxY; y++)
     {
         uint16_t posY = screenPosY + y * screenZoomY;
-        // for (uint32_t x = 0; x < screenWidth; x++)
         for (uint32_t x = screenDirtyMinX; x < screenDirtyMaxX; x++)
         {
-            index = y * screenWidth + x; // screenDirtyMinX;
+            index = y * screenWidth + x;
             // #ifdef ESP32P4
             if (screenData[index] != screenDataOld[index])
             {
@@ -393,7 +443,6 @@ void TheDisplay::Loop()
                     for (uint16_t zy = 0; zy < screenZoomY; zy++)
                     {
 #ifdef ESP32P4
-                        // newScreen[posX + zx + (posY + zy) * screenWidth * screenZoomX] = color;
                         fbs[currentFrameBuffer][posX + zx + (posY + zy) * SCREEN_WIDTH] = color;
 #else
                         // DrawPixel(posX + zx, posY + zy, pixelColor);
@@ -411,7 +460,7 @@ void TheDisplay::Loop()
 #ifdef DEBUG_DISPLAY_GFX
     if (hasGfx)
     {
-        for (uint8_t g = 0; g < 2; g++)
+        for (uint8_t g = 0; g < countGfxElement; g++)
         {
             GfxElement *element = allGfx[g];
             for (uint16_t z = 0; z < element->total_elements; z++)
@@ -646,6 +695,12 @@ void TheDisplay::Loop()
 
 #ifdef ESP32P4
 #else
+void TheDisplay::ChangeTitle(std::string text)
+{
+    std::string t = "RayLib Arcade - " + text;
+    SetWindowTitle(t.c_str());
+}
+
 bool TheDisplay::MustExit()
 {
     return mustExit;

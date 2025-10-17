@@ -69,8 +69,8 @@
 // 1 or 2
 #define SCREEN_FRAME_BUFFER (1)
 #else
-#define SCREEN_WIDTH (600)
-#define SCREEN_HEIGHT (600)
+#define SCREEN_WIDTH (800)
+#define SCREEN_HEIGHT (1280)
 #include "raylib.h"
 #endif
 
@@ -108,13 +108,20 @@
 
 // #define DEBUG_DISPLAY_COLOR
 // #define DEBUG_DISPLAY_PALETTE
-//#define DEBUG_DISPLAY_GFX
+// #define DEBUG_DISPLAY_GFX
 // #define DEBUG_DISPLAY_TILES
 // #define DEBUG_DISPLAY_SPRITES
 
-// #define LIMIT_FPS
- //#define NO_FPS
+#ifdef ESP32P4
+//#define LIMIT_FPS
+// #define NO_FPS
+//#define NO_FPS_ON_CONSOLE
+#else
+#define FPS_LIMIT 120
+#define LIMIT_FPS
+// #define NO_FPS
 #define NO_FPS_ON_CONSOLE
+#endif
 
 class TheDisplay
 {
@@ -124,13 +131,17 @@ public:
     void Setup();
     void Loop();
     void SetDisplayForGame(uint32_t zoomX, uint32_t zoomY, uint32_t atX = 0, uint32_t atY = 0);
+    void SetVerticalPositionForGame(uint32_t y);
     uint32_t GetMaxZoomX();
     uint32_t GetMaxZoomY();
     uint32_t GetPaddingLeftForZoom(uint32_t zoomX);
     uint32_t GetPaddingTopForZoom(uint32_t zoomY);
+    void DisplayPng(uint32_t atX, uint32_t atY);
 
 #ifdef ESP32P4
+    THE_COLOR ConvertRGB565ToRGB888(uint16_t color565);
 #else
+    void ChangeTitle(std::string text);
     bool MustExit();
     void ClearRectangle(uint32_t x, uint32_t y, uint32_t width, uint32_t height);
 
@@ -141,6 +152,8 @@ public:
     void Pixel(uint16_t x, uint16_t y, uint16_t color);
 
     void Print(std::string text, uint32_t x, uint32_t y);
+    Color ConvertRGB565ToRGB888(uint16_t color565);
+    // Color ConvertRGB888ToRGBA8888(uint32_t rgb888);
 
 #endif
     THE_COLOR Rgb888ToRgb565(uint8_t red, uint8_t green, uint8_t blue);
@@ -162,8 +175,6 @@ private:
 #endif
     uint16_t screenZoomX = 1;
     uint16_t screenZoomY = 1;
-    uint16_t screenPosX = 0;
-    uint16_t screenPosY = 0;
 
 #ifdef ESP32P4
     uint8_t byte_per_pixel;
@@ -187,6 +198,7 @@ private:
     Image fb_image;
     Color *pixels;
     Texture2D fb_texture;
+
 #endif
 };
 

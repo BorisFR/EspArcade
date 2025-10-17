@@ -1,7 +1,8 @@
 #include "Frogger.h"
 
-struct GfxLayout froggerTileLayout =
-    {
+// line 9544 : void galaxian_state::init_froggers()
+
+struct GfxLayout froggerTileLayout = {
         8, 8,             /* 8*8 characters */
         256,              /* 256 characters */
         2,                /* 2 bits per pixel */
@@ -10,8 +11,8 @@ struct GfxLayout froggerTileLayout =
         {0, 1, 2, 3, 4, 5, 6, 7},
         8 * 8 /* every char takes 8 consecutive bytes */
 };
-struct GfxLayout froggerSpriteLayout =
-    {
+
+struct GfxLayout froggerSpriteLayout = {
         16, 16,            /* 16*16 sprites */
         64,                /* 64 sprites */
         2,                 /* 2 bits per pixel */
@@ -20,6 +21,7 @@ struct GfxLayout froggerSpriteLayout =
         {0, 1, 2, 3, 4, 5, 6, 7, 8 * 8 + 0, 8 * 8 + 1, 8 * 8 + 2, 8 * 8 + 3, 8 * 8 + 4, 8 * 8 + 5, 8 * 8 + 6, 8 * 8 + 7},
         32 * 8 /* every sprite takes 32 consecutive bytes */
 };
+
 /*
 // I/O line states
 enum line_state
@@ -63,13 +65,6 @@ void frogger_interrupt_enable_w(int offset, int data)
         Z80AskForNMI[Z80CurrentCpu] = true;
     else
         Z80AskForNMI[Z80CurrentCpu] = false;
-    // //Z80InterruptEnable[Z80CurrentCpu] = data;// & 1;
-    // // if CLEAR is held low, we must make sure the interrupt signal is clear
-    // if (data == 0)
-    //     Z80AskForNMI = false;
-    // else // TODO: not sure for the else ... DOES not work
-    //    Z80AskForNMI = true;
-    // // m_maincpu->set_input_line(m_irq_line, CLEAR_LINE);
 }
 
 // uint8_t froggerAttributes[0x0040];
@@ -129,7 +124,8 @@ void frogger_objram_w(int offset, int data)
         {
             // Frogger: top and bottom 4 bits swapped entering the adder
             // if (m_frogger_adjust)
-            froggerScrollLine[address >> 1] = ((data << 4) & 0xf0) | ((data >> 4) & 0x0f);
+            //froggerScrollLine[address >> 1] = ((data << 4) & 0xf0) | ((data >> 4) & 0x0f);
+            froggerScrollLine[address >> 1] = (data >> 4) | (data << 4);
             // froggerScrollSpeed[data];
             //  if (!m_sfx_adjust)
             //  	m_bg_tilemap->set_scrolly(offset >> 1, data);
@@ -188,9 +184,6 @@ uint8_t maxc2 = 0;
 
 void FroggerRefreshScreen()
 {
-    // memcpy(screenDataOld, screenData, screenLength);
-    //for (uint32_t i = 0; i < screenLength; i++)
-    //    screenDataOld[i] = screenData[i];
     // videoram_size = 0x03FF;
     // frogger_attributesram => boardMemory from 0xb000
     element = allGfx[0];
@@ -220,7 +213,7 @@ void FroggerRefreshScreen()
         uint8_t tileIndex = boardMemory[tileAddress];
         if (sy < 16)
         {
-            GameDrawElement(screenData, 8 * sx, 8 * sy, false, false, tileIndex, col, TRANSPARENCY_REPLACE, froggerWater);
+            GameDrawElement(screenBitmap, 8 * sx, 8 * sy, false, false, tileIndex, col, TRANSPARENCY_REPLACE, froggerWater);
             // if (last != col)
             //{
             //     last = col;
@@ -229,7 +222,7 @@ void FroggerRefreshScreen()
         }
         else
         {
-            GameDrawElement(screenData, 8 * sx, 8 * sy, false, false, tileIndex, col, TRANSPARENCY_NONE, TRANSPARENT_NONE_COLOR);
+            GameDrawElement(screenBitmap, 8 * sx, 8 * sy, false, false, tileIndex, col, TRANSPARENCY_NONE, TRANSPARENT_NONE_COLOR);
             // if (last != col)
             //{
             //     last = col;
@@ -237,6 +230,13 @@ void FroggerRefreshScreen()
             // } // 0 ou 4
         }
         //}
+    }
+    // scroll
+    visibleArea = allGames[currentGame].video.visibleArea;
+    for (uint8_t l = 0; l < 32; l++)
+    {
+        uint8_t scroll = froggerScrollLine[l] % screenWidth;
+        GameScrollLine(l, scroll, 8);
     }
     /*
         // copy the temporary bitmap to the screen
@@ -317,7 +317,7 @@ void FroggerRefreshScreen()
         if (base[3])
         {
             uint8_t base0 = ((base[0] >> 4) | (base[0] << 4));
-            uint8_t sy = 240 - (base0 - (spriteNumber >= 3));
+            uint8_t sy = 240 - (base0 - (spriteNumber < 3));
             uint16_t code = base[1] & 0x3f;
             uint8_t flipx = base[1] & 0x40;
             uint8_t flipy = base[1] & 0x80;

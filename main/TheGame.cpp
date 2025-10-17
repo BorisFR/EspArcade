@@ -135,7 +135,7 @@ void TheGame::Setup(TheDisplay &display, TheSdCard &sdCard)
             portValue = 0;
             break;
         case IPT_COIN1:
-            PORT_BIT_PARAM("BUTTON_CREDIT", BUTTON_CREDIT)
+            PORT_BIT_PARAM("*** BUTTON_CREDIT", BUTTON_CREDIT)
             break;
         case IPT_COIN2:
             PORT_BIT_PARAM("BUTTON_COIN2", BUTTON_COIN2)
@@ -150,31 +150,31 @@ void TheGame::Setup(TheDisplay &display, TheSdCard &sdCard)
             PORT_BIT_VALUE
             break;
         case IPT_JOYSTICK_LEFT:
-            PORT_BIT_PARAM("BUTTON_LEFT", BUTTON_LEFT)
+            PORT_BIT_PARAM("*** BUTTON_LEFT", BUTTON_LEFT)
             break;
         case IPT_JOYSTICK_LEFT | IPF_PLAYER2:
             PORT_BIT_PARAM("BUTTON_LEFT for player 2", BUTTON_LEFT_P2)
             break;
         case IPT_JOYSTICK_RIGHT:
-            PORT_BIT_PARAM("BUTTON_RIGHT", BUTTON_RIGHT)
+            PORT_BIT_PARAM("*** BUTTON_RIGHT", BUTTON_RIGHT)
             break;
         case IPT_JOYSTICK_RIGHT | IPF_PLAYER2:
             PORT_BIT_PARAM("BUTTON_RIGHT for player 2", BUTTON_RIGHT_P2)
             break;
         case IPT_JOYSTICK_UP:
-            PORT_BIT_PARAM("BUTTON_UP", BUTTON_UP)
+            PORT_BIT_PARAM("*** BUTTON_UP", BUTTON_UP)
             break;
         case IPT_JOYSTICK_UP | IPF_PLAYER2:
             PORT_BIT_PARAM("BUTTON_UP for player 2", BUTTON_UP_P2)
             break;
         case IPT_JOYSTICK_DOWN:
-            PORT_BIT_PARAM("BUTTON_DOWN", BUTTON_DOWN)
+            PORT_BIT_PARAM("*** BUTTON_DOWN", BUTTON_DOWN)
             break;
         case IPT_JOYSTICK_DOWN | IPF_PLAYER2:
             PORT_BIT_PARAM("BUTTON_DOWN for player 2", BUTTON_DOWN_P2)
             break;
         case IPT_BUTTON1:
-            PORT_BIT_PARAM("BUTTON_FIRE", BUTTON_FIRE)
+            PORT_BIT_PARAM("*** BUTTON_FIRE", BUTTON_FIRE)
             break;
         case IPT_UNKNOWN:
             PORT_BIT_VALUE
@@ -278,6 +278,9 @@ void TheGame::Setup(TheDisplay &display, TheSdCard &sdCard)
             finish = true;
             continue;
         }
+        if (allGames[currentGame].machine.readAddress[countMemoryReadFunction].size)
+            *allGames[currentGame].machine.readAddress[countMemoryReadFunction].size = allGames[currentGame].machine.readAddress[countMemoryReadFunction].end - allGames[currentGame].machine.readAddress[countMemoryReadFunction].start;
+
         // MY_DEBUG2(TAG, "MemoryRead Start:", allGames[currentGame].readAddress[countMemoryReadFunction].start)
         // MY_DEBUG2(TAG, "MemoryRead End:", allGames[currentGame].readAddress[countMemoryReadFunction].end)
         for (uint32_t p = allGames[currentGame].machine.readAddress[countMemoryReadFunction].start; p <= allGames[currentGame].machine.readAddress[countMemoryReadFunction].end; p++)
@@ -313,6 +316,8 @@ void TheGame::Setup(TheDisplay &display, TheSdCard &sdCard)
         if (allGames[currentGame].machine.writeAddress[countMemoryWriteFunction].base)
         {
             uint32_t size = allGames[currentGame].machine.writeAddress[countMemoryWriteFunction].end - allGames[currentGame].machine.writeAddress[countMemoryWriteFunction].start;
+            if (allGames[currentGame].machine.writeAddress[countMemoryWriteFunction].size)
+                *allGames[currentGame].machine.writeAddress[countMemoryWriteFunction].size = size;
             *allGames[currentGame].machine.writeAddress[countMemoryWriteFunction].base = (uint8_t *)malloc(size * sizeof(uint8_t));
             if (allGames[currentGame].machine.writeAddress[countMemoryWriteFunction].base == NULL)
             {
@@ -400,6 +405,13 @@ bool TheGame::Initialize(TheDisplay &display, TheSdCard &sdCard)
         return false;
     }
     memset(screenDataOld, 0, screenLength);
+    screenBitmap = (THE_COLOR *)malloc(screenLength);
+    if (screenBitmap == NULL)
+    {
+        MY_DEBUG(TAG, "Error allocating bitmap screen memory");
+        return false;
+    }
+    memset(screenBitmap, 0, screenLength);
     uint8_t *toMemory = NULL;
     uint8_t i = 0;
     bool finish = false;
@@ -567,6 +579,8 @@ bool TheGame::Initialize(TheDisplay &display, TheSdCard &sdCard)
             GeneratePalette(display);
         }
     }
+    if (allGames[currentGame].machine.gameInit)
+        allGames[currentGame].machine.gameInit();
     return true;
 }
 
@@ -605,15 +619,15 @@ bool TheGame::DecodeColors(TheDisplay &display)
         MY_DEBUG(TAG, "Error allocating color buffers");
         return false;
     }
-    for (uint16_t c = 0; c < colorMemorySize; c++)
+    for (uint32_t c = 0; c < colorMemorySize; c++)
     {
         uint8_t colorByte = colorMemory[c];
         uint8_t red = (uint8_t)((((colorByte >> 0U) & 0b1) * 0x21) + (((colorByte >> 1U) & 0b1) * 0x47) + (((colorByte >> 2U) & 0b1) * 0x97));
         uint8_t green = (uint8_t)((((colorByte >> 3U) & 0b1) * 0x21) + (((colorByte >> 4U) & 0b1) * 0x47) + (((colorByte >> 5U) & 0b1) * 0x97));
         uint8_t blue = (uint8_t)((((colorByte >> 6U) & 0b1) * 0x51) + (((colorByte >> 7U) & 0b1) * 0xAE));
         colorRGB[c] = display.Rgb888ToRgb565(red, green, blue);
-         std::string t = std::to_string(red) + "/" + std::to_string(green) + "/" + std::to_string(blue) + " => " + std::to_string(colorRGB[c]);
-         MY_DEBUG(TAG, t.c_str())
+        // std::string t = std::to_string(red) + "/" + std::to_string(green) + "/" + std::to_string(blue) + " => " + std::to_string(colorRGB[c]);
+        // MY_DEBUG(TAG, t.c_str())
     }
     return true;
 }
@@ -634,7 +648,7 @@ bool TheGame::GeneratePalette(TheDisplay &display)
     }
     memset(paletteColor, 0, paletteColorSize);
     // uint8_t indexColor = 0;
-    for (uint8_t i = 0; i < colorMemorySize; i++)
+    for (uint32_t i = 0; i < colorMemorySize; i++)
     {
         paletteColor[i] = colorRGB[i];
     }
@@ -657,7 +671,7 @@ bool TheGame::DecodePalette()
     }
     memset(paletteColor, 0, paletteMemorySize);
     paletteColorSize = paletteMemorySize;
-    for (uint16_t p = 0; p < paletteMemorySize; p++)
+    for (uint32_t p = 0; p < paletteMemorySize; p++)
     {
         paletteColor[p] = colorRGB[paletteMemory[p]];
         // if (paletteColor[p] != 255)
@@ -730,11 +744,11 @@ void TheGame::DecodeElement(struct GfxElement *element, uint16_t index, const ui
     for (uint8_t plane = 0; plane < gfxLayout->planes; plane++)
     {
         uint32_t offset = index * gfxLayout->charincrement + gfxLayout->planeoffset[plane];
-        for (uint16_t y = 0; y < element->height; y++)
+        for (uint32_t y = 0; y < element->height; y++)
         {
             // int yoffs = offset + gfxLayout->yoffset[y];
             uint8_t *pointerLine = element->gfxdata->line[index * element->height + y];
-            for (uint16_t x = 0; x < element->width; x++)
+            for (uint32_t x = 0; x < element->width; x++)
             {
                 int xoffs = x;
                 int yoffs = y;
@@ -770,10 +784,10 @@ void TheGame::DecodeElement(struct GfxElement *element, uint16_t index, const ui
     {
         /* fill the pen_usage array with info on the used pens */
         element->pen_usage[index] = 0;
-        for (uint16_t y = 0; y < element->height; y++)
+        for (uint32_t y = 0; y < element->height; y++)
         {
             uint8_t *pointerLine = element->gfxdata->line[index * element->height + y];
-            for (uint16_t x = 0; x < element->width; x++)
+            for (uint32_t x = 0; x < element->width; x++)
             {
                 element->pen_usage[index] |= 1 << pointerLine[x];
             }
@@ -816,7 +830,7 @@ GfxElement *TheGame::DecodeGfxElement(const uint8_t *fromMemory, uint32_t offset
         element->pen_usage = (unsigned int *)malloc(element->total_elements * sizeof(int));
     /* no need to check for failure, the code can work without pen_usage */
     MY_DEBUG2(TAG, "color_granularity ", element->color_granularity)
-    for (uint16_t index = 0; index < gfxLayout->total; index++)
+    for (uint32_t index = 0; index < gfxLayout->total; index++)
     {
         // MY_DEBUG2(TAG, "GFX LAYOUT ", index)
         DecodeElement(element, index, fromMemory, offset, gfxLayout);
@@ -898,11 +912,13 @@ void TheGame::osd_clearbitmap(osd_bitmap *bitmap)
 
 bool TheGame::DecodeAllGfx(const GfxDecodeInfo info[])
 {
+    countGfxElement = 0;
     for (uint8_t i = 0; i < MAX_GFX_ELEMENTS; i++)
     {
         if (info[i].memory_region == -1)
             break;
         MY_DEBUG2(TAG, "GFX ELEMENT ", i)
+        countGfxElement++;
         switch (info[i].memory_region)
         {
         case ROM_GFX:

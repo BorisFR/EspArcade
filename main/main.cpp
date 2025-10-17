@@ -47,7 +47,11 @@ void setup()
   //
   // Start a game
   //
-  currentGame = 2; // 0 is invaders :) See file GamesList.h
+  currentGame = 4; // 0 is invaders :) See file GamesList.h
+#ifdef ESP32P4
+#else
+  display.ChangeTitle(GAME_NAME);
+#endif
   switch (GAME_MACHINE)
   {
 #ifdef MACHINE_8080BW
@@ -69,8 +73,18 @@ void setup()
   uint32_t zoomFactor = MIN(display.GetMaxZoomX(), display.GetMaxZoomY());
   if (zoomFactor == 0)
     MY_DEBUG2TEXT(TAG, "*** ERROR ***", "Zoom is 0")
-  //zoomFactor=1;
+  // zoomFactor=1;
   display.SetDisplayForGame(zoomFactor, zoomFactor, display.GetPaddingLeftForZoom(zoomFactor), display.GetPaddingTopForZoom(zoomFactor));
+  display.SetVerticalPositionForGame(allGames[currentGame].video.top);
+  std::string temp = "background/" + std::string(GAME_FOLDER) + ".jpg";
+  bool bgOk = sdCard.LoadJpgFile(temp.c_str());
+  // sdCard.LoadJpgFile("background/invadpt2.jpg");
+  // sdCard.LoadJpgFile("background/invaders.jpg");
+  if (bgOk)
+    display.DisplayPng(0, 0);
+  // sdCard.LoadJpgFile("background/test.jpg");
+  // sdCard.LoadJpgFile("background/coin.jpg");
+  // display.DisplayPng(0, SCREEN_HEIGHT - pngHeight - 1);
 }
 
 void loop()

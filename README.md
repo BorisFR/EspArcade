@@ -40,7 +40,8 @@ Mesures effectuées sans limite activée, chaque jeu a une résolution qui est d
 | Space Invaders | invaders | ✅ | ❌ | 250 | 🟢 | i8080 |
 | Space Invaders Part II | invadpt2 | ✅ | ❌ | 250 | 🟢 | i8080 |
 | Pacman | pacman | ✅ | ❌ | 55 | 🟡 | z80 |
-| Frogger | frogger | ❌ | ❌ | 65 | 🟡 | 2 x z80 |
+| Frogger | frogger | ❌ | ❌ | 40 | 🟡 | 2 x z80 |
+| Galaxian | galaxian | ✅ | ❌ | 45 | 🟡 | z80 |
 
 # Structure des dossiers de la carte SD
 

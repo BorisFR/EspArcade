@@ -54,6 +54,12 @@ I (2921) Main: Free heap size (caps) INTERNAL: 363563
 I (2926) Main: Free heap size (caps) DMA: 323951
 I (2930) Main: Free heap size (caps) SPIRAM: 30089468
 
+I (4420) Main: Free heap size: 28200840
+I (4420) Main: Free heap size (caps): 28232871
+I (4420) Main: Free heap size (caps) INTERNAL: 372511
+I (4421) Main: Free heap size (caps) DMA: 332899
+I (4426) Main: Free heap size (caps) SPIRAM: 27860360
+
 I (27) boot: ESP-IDF v5.5 2nd stage bootloader
 I (28) boot: compile time Sep 24 2025 15:20:37
 I (28) boot: Multicore bootloader
