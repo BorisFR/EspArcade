@@ -23,7 +23,8 @@ Il n'y a aucun control implémenté pour le joueur 😊
 
 ## Jeux  
 
-![Space Invaders](roms/RLarcade_invaders.png) ![Space Invaders Part II](roms/RLarcade_invadpt2.png) ![Pacman](roms/RLarcade_pacman.png) ![Frogger](roms/RLarcade_frogger.png)
+<img src="sdcard/ss/invaders.png" alt="Space Invaders" width="150" /> <img src="sdcard/ss/invadpt2.png" alt="Space Invaders Part II" width="150" /> <img src="sdcard/ss/pacman.png" alt="Pacman" width="150" /> <img src="sdcard/ss/galaxian.png" alt="Galaxian" width="150" /> <img src="sdcard/ss/frogger.png" alt="Frogger" width="150" /> <img src="sdcard/ss/pengo.png" alt="Pengo" width="150" />  
+
 
 
 ## Environnement de développement  
