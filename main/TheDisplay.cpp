@@ -64,8 +64,9 @@ void TheDisplay::Setup()
     .bus_id = 0,                                 \
     .num_data_lanes = 2,                         \
     .phy_clk_src = MIPI_DSI_PHY_CLK_SRC_DEFAULT, \
-    .lane_bit_rate_mbps = 1000,                  \
-}
+    .lane_bit_rate_mbps = 1400,                  \
+} // before: lane_bit_rate_mbps=1000
+    // formula: https://docs.espressif.com/projects/esp-iot-solution/en/latest/display/lcd/mipi_dsi_lcd.html
     esp_lcd_dsi_bus_config_t bus_config = ILI9881C_PANEL_BUS_DSI_2CH_CONFIG();
     esp_lcd_new_dsi_bus(&bus_config, &mipi_dsi_bus);
     ESP_LOGI(TAG, "Install panel IO");
@@ -777,7 +778,15 @@ void TheDisplay::Loop()
                     for (uint16_t zy = 0; zy < screenZoomY; zy++)
                     {
 #ifdef ESP32P4
-                        fbs[currentFrameBuffer][posX + zx + (posY + zy) * SCREEN_WIDTH] = color;
+                        if (dirtybuffer[index] == DIRTY_TRANSPARENT)
+                        {
+                            uint32_t p = posX + zx + (posY + zy) * SCREEN_WIDTH;
+                            fbs[currentFrameBuffer][posX + zx + (posY + zy) * SCREEN_WIDTH] = pngImage[p];
+                        }
+                        else
+                        {
+                            fbs[currentFrameBuffer][posX + zx + (posY + zy) * SCREEN_WIDTH] = color;
+                        }
 #else
                         if (dirtybuffer[index] == DIRTY_TRANSPARENT)
                         {
