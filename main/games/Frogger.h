@@ -24,7 +24,8 @@ extern "C"
 
     extern void frogger_interrupt_enable_w(int offset, int data);
     // extern void frogger_attributes_w(int offset, int data);
-    extern void frogger_videoram_w(int offset, int data);
+    WRITE_HANDLER(frogger_videoram_w);
+    //extern void frogger_videoram_w(int offset, int data);
     extern void frogger_objram_w(int offset, int data);
     extern void frogger_sh_irqtrigger_w(int offset, int data);
 
@@ -35,7 +36,7 @@ extern "C"
 }
 #endif
 
-#define FROGGER {"frogger", "Frogger", {295, 32 * 8, 32 * 8, {2 * 8, 30 * 8 - 1, 0 * 8, 32 * 8 - 1}, ORIENTATION_DEFAULT, FroggerRefreshScreen, froggerGfxDecodeInfo}, 3072000 / 60, {frogger_rom, frogger_decode_rom, frogger_readmem, frogger_writemem, frogger_input_ports, NOTHING, NOTHING}, MACHINE_Z80}
+#define FROGGER {"frogger", "Frogger", {280, 32 * 8, 32 * 8, {2 * 8, 30 * 8 - 1, 0 * 8, 32 * 8 - 1}, ORIENTATION_DEFAULT, FroggerRefreshScreen, froggerGfxDecodeInfo}, 3072000 / 60, {frogger_rom, frogger_decode_rom, frogger_readmem, frogger_writemem, frogger_input_ports, NOTHING, NOTHING}, MACHINE_Z80}
 
 ROM_START(frogger_rom) // CPU 1
 ROM_REGION(0x10000)    /* 64k for code */
@@ -71,7 +72,7 @@ static struct MemoryWriteAddress frogger_writemem[] = {
     {0x8000, 0x87ff, MWA_RAM},
     //{0xa800, 0xabff, MWA_RAM},              // videoram_w, &videoram, &videoram_size},
     // map(0xa800, 0xabff).mirror(0x0400).ram().w(FUNC(galaxian_state::galaxian_videoram_w)).share("videoram");
-    {0xa800, 0xabff, frogger_videoram_w},
+    {0xa800, 0xabff, frogger_videoram_w, &videoram, &videoram_size},
     //{0xb000, 0xb03f, frogger_attributes_w}, //, &frogger_attributesram},
     //{0xb040, 0xb05f, MWA_RAM},              //, &spriteram, &spriteram_size},
     // map(0xb000, 0xb0ff).mirror(0x0700).ram().w(FUNC(galaxian_state::galaxian_objram_w)).share("spriteram");

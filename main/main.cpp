@@ -5,10 +5,9 @@ const char *TAG = "Main";
 
 #include "TheSdCard.hpp"
 TheSdCard sdCard = TheSdCard();
-
 #include "TheDisplay.hpp"
 TheDisplay display = TheDisplay();
-
+#include "TheMenu.hpp" // TheMenu is working as a game
 #ifdef MACHINE_8080BW
 #include "machines/MachineDriver8080bw.hpp"
 #endif
@@ -19,41 +18,21 @@ TheDisplay display = TheDisplay();
 #include "machines/MachineDriverxxx.hpp"
 #endif
 TheGame *game;
-uint8_t countGames = 0;
 
-void setup()
+//
+// Start a game
+//
+void StartGame()
 {
-  MY_DEBUG(TAG, "*** ESP Arcade");
-  display.Setup();
-  sdCard.Setup();
-
-  uint8_t countGames = 0;
-  bool finish = false;
-  while (!finish)
-  {
-    if (allGames[countGames].machineType == -1)
-    {
-      finish = true;
-      continue;
-    }
-    MY_DEBUG2TEXT(TAG, "Available:", allGames[countGames].name);
-    countGames++;
-  }
-  if (countGames == 0)
-  {
-    MY_DEBUG(TAG, "There is no game!")
-    return;
-  }
-  //
-  // Start a game
-  //
-  currentGame = 4; // 0 is invaders :) See file GamesList.h
 #ifdef ESP32P4
 #else
   display.ChangeTitle(GAME_NAME);
 #endif
   switch (GAME_MACHINE)
   {
+  case MACHINE_THEMENU:
+    game = new TheMenu();
+    break;
 #ifdef MACHINE_8080BW
   case MACHINE_8080BW:
     game = new MachineDriver8080bw();
@@ -75,16 +54,50 @@ void setup()
     MY_DEBUG2TEXT(TAG, "*** ERROR ***", "Zoom is 0")
   // zoomFactor=1;
   display.SetDisplayForGame(zoomFactor, zoomFactor, display.GetPaddingLeftForZoom(zoomFactor), display.GetPaddingTopForZoom(zoomFactor));
-  display.SetVerticalPositionForGame(allGames[currentGame].video.top);
-  std::string temp = "background/" + std::string(GAME_FOLDER) + ".jpg";
+
+  display.FillScreen(display.Rgb888ToRgb565(255, 80, 0));
+  std::string temp = "_background/" + std::string(GAME_FOLDER) + ".jpg";
   bool bgOk = sdCard.LoadJpgFile(temp.c_str());
-  // sdCard.LoadJpgFile("background/invadpt2.jpg");
-  // sdCard.LoadJpgFile("background/invaders.jpg");
   if (bgOk)
+  {
     display.DisplayPng(0, 0);
-  // sdCard.LoadJpgFile("background/test.jpg");
-  // sdCard.LoadJpgFile("background/coin.jpg");
-  // display.DisplayPng(0, SCREEN_HEIGHT - pngHeight - 1);
+  }
+  else
+  {
+    display.CreateBackground();
+    // display.FillScreen(myBlack);
+  }
+  display.SetVerticalPositionForGame(allGames[currentGame].video.top);
+
+  // std::string temp = "background/" + std::string(GAME_FOLDER) + ".jpg";
+  // bool bgOk = sdCard.LoadJpgFile(temp.c_str());
+  // if (bgOk)
+  //   display.DisplayPng(0, 0);
+}
+
+void setup()
+{
+  MY_DEBUG(TAG, "*** ESP Arcade");
+  display.Setup();
+  sdCard.Setup();
+  bool finish = false;
+  while (!finish)
+  {
+    if (allGames[countGames].machineType == -1)
+    {
+      finish = true;
+      continue;
+    }
+    MY_DEBUG2TEXT(TAG, "Available:", allGames[countGames].name);
+    countGames++;
+  }
+  if (countGames == 0)
+  {
+    MY_DEBUG(TAG, "There is no game!")
+    return;
+  }
+  currentGame = 0;
+  StartGame();
 }
 
 void loop()
@@ -94,10 +107,22 @@ void loop()
     game->Loop(display);
   }
   display.Loop();
+  if (display.Clicked())
+  {
+    keyPressed[BUTTON_START] = true;
+    game->KeyChange(BUTTON_START);
+  }
   for (uint8_t k = 0; k < BUTTON_END; k++)
   {
     if (IsKeyChanged(k))
       game->KeyChange(k);
+  }
+  if (exitGame)
+  {
+    MY_DEBUG2(TAG, "Change game to", nextGame)
+    delete game;
+    currentGame = nextGame;
+    StartGame();
   }
 }
 

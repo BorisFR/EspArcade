@@ -11,8 +11,11 @@
 
 #include <stdint.h>
 
-#define MACHINE_8080BW 1
-#define MACHINE_Z80 2
+#define GAME_NUMBER_IS_MENU 0
+
+#define MACHINE_THEMENU 1
+#define MACHINE_8080BW 2
+#define MACHINE_Z80 3
 // #define MACHINE_xxx 3
 
 enum Buttons
@@ -39,6 +42,8 @@ enum Buttons
 #define SIZEOF(arr) sizeof(arr) / sizeof(*arr)
 
 extern uint8_t currentGame;
+extern uint8_t exitGame;
+extern uint8_t nextGame;
 
 #define MAX_Z80_CPU 3
 
@@ -57,7 +62,7 @@ extern uint8_t GetBitFromNumber(uint8_t value);
 
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 
-#define PORT_SWITCH_VALUE MY_DEBUG2(TAG, "Value:", allGames[currentGame].machine.inputPorts[i].default_value)
+#define PORT_SWITCH_VALUE // MY_DEBUG2(TAG, "Value:", allGames[currentGame].machine.inputPorts[i].default_value)
 #define PORT_SWITCH_DEFAULT_VALUE(value) portValue += value;
 
 #define PORT_BIT_VALUE                                                                           \
@@ -71,7 +76,7 @@ extern uint8_t GetBitFromNumber(uint8_t value);
     keyBit[key] = GetBitFromNumber(allGames[currentGame].machine.inputPorts[i].mask);                    \
     keyValuePressed[key] = allGames[currentGame].machine.inputPorts[i].default_value; \
     PORT_BIT_VALUE                                                                                       \
-    MY_DEBUG2(TAG, name, GetBitFromNumber(allGames[currentGame].machine.inputPorts[i].mask))
+    // MY_DEBUG2(TAG, name, GetBitFromNumber(allGames[currentGame].machine.inputPorts[i].mask))
 
 // #define PORT_NOT_USE(name) PORT_BIT_PARAM(name, BUTTON_NOT_USED)
 

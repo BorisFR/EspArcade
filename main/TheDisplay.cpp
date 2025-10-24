@@ -1,19 +1,16 @@
 #include "TheDisplay.hpp"
 
+bool justTouch;
+
 #ifdef ESP32P4
-bool touched;
-unsigned long lastTouch = 0;
-#define TOUCH_DELAY_RELEASED 100
-bool touchedInProgress = false;
 
 void touchCallBack(esp_lcd_touch_handle_t tp)
 {
-    lastTouch = millis();
-    if (touchedInProgress)
-        return;
+    // if (touchedInProgress)
+    //     return;
     // esp_rom_printf("Touch interrupt callback\n");
-    touched = true;
-    touchedInProgress = true;
+    justTouch = true;
+    // touchedInProgress = true;
 }
 #endif
 
@@ -33,7 +30,7 @@ IRAM_ATTR static bool test_notify_refresh_ready(esp_lcd_panel_handle_t panel, es
 
 TheDisplay::TheDisplay()
 {
-    MY_DEBUG(TAG, "created");
+    MY_DEBUG(TAG, "created")
     mustExit = false;
 }
 
@@ -148,10 +145,10 @@ void TheDisplay::Setup()
     touch = gsl3680_touch();
     touch.begin(I2C_SDA_PIN, I2C_SCL_PIN, TOUCH_RST, TOUCH_INT, touchCallBack);
     touch.set_rotation(TOUCH_ROTATION);
-    touched = false;
-    touchedInProgress = false;
+    // justTouch = false;
 #else
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Raylib Arcade");
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+    InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Raylib Arcade");
     pixels = (Color *)malloc(SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(Color));
     memset(pixels, 0, SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(Color));
     fb_image.width = SCREEN_WIDTH;
@@ -160,10 +157,26 @@ void TheDisplay::Setup()
     fb_image.data = pixels;
     fb_image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
     fb_texture = LoadTextureFromImage(fb_image);
+    srcRec = {0.0f, 0.0f, (float)fb_texture.width, (float)fb_texture.height};
+    origin = {0.0f, 0.0f};
+    actualScreenWidth = GetScreenWidth();
+    actualScreenHeight = GetScreenHeight();
+    dstRec = {0.0f, 0.0f, (float)actualScreenWidth, (float)actualScreenHeight};
 #ifdef LIMIT_FPS
     SetTargetFPS(FPS_LIMIT);
 #endif
 #endif
+    touchedInProgress = false;
+    scrollUp = false;
+    scrollDown = false;
+    scrollLeft = false;
+    scrollRight = false;
+    scrollDistanceVertical = 0;
+    scrollDistanceHorizontal = 0;
+    scrollSpeedVertical = 0;
+    scrollSpeedHorizontal = 0;
+    oneClick = false;
+
     myWhite = Rgb888ToRgb565(255, 255, 255);
     myBlack = Rgb888ToRgb565(0, 0, 0);
     myGreen = Rgb888ToRgb565(0x20, 0xff, 0x20);
@@ -210,7 +223,6 @@ uint32_t TheDisplay::GetMaxZoomY() { return SCREEN_HEIGHT / screenHeight; }
 uint32_t TheDisplay::GetPaddingLeftForZoom(uint32_t zoomX) { return (SCREEN_WIDTH - (screenWidth * zoomX)) / 2; }
 
 // *******************************************************************
-
 
 #ifdef ESP32P4
 THE_COLOR TheDisplay::ConvertRGB565ToRGB888(uint16_t color565)
@@ -267,6 +279,128 @@ void TheDisplay::DisplayPng(uint32_t atX, uint32_t atY)
     }
 }
 
+void TheDisplay::FillScreen(THE_COLOR color)
+{
+#ifdef ESP32P4
+    THE_COLOR c = Rgb888ToRgb565(0, 100, 0); // color;
+#else
+    Color c = Color{0, 100, 0, 255}; // ConvertRGB565ToRGB888(color);
+#endif
+    for (uint32_t x = 0; x < SCREEN_WIDTH; x++)
+    {
+        for (uint32_t y = 0; y < SCREEN_HEIGHT; y++)
+        {
+            uint32_t pos = x + y * SCREEN_WIDTH;
+#ifdef ESP32P4
+            fbs[currentFrameBuffer][pos] = c;
+#else
+            pixels[pos] = c;
+#endif
+        }
+    }
+    // memset(screenData, color, screenLength);
+}
+
+bool TheDisplay::CreateBackground()
+{
+    if (pngMemorySize > 0)
+    {
+        MY_DEBUG(TAG, "Background already create")
+        return false;
+    }
+    pngMemorySize = SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(PNG_PTR_TYPE);
+    pngImage = (PNG_PTR_TYPE *)malloc(pngMemorySize);
+    if (pngImage == NULL)
+    {
+        pngMemorySize = 0;
+        MY_DEBUG(TAG, "Not enought memory to create background")
+        return false;
+    }
+    memset(pngImage, 0x0, pngMemorySize);
+    pngWidth = SCREEN_WIDTH;
+    pngHeight = SCREEN_HEIGHT;
+    // MY_DEBUG(TAG, "Background ready")
+    return true;
+}
+
+uint32_t TheDisplay::CreateEmptyImage(PNG_PTR_TYPE *image, uint32_t width, uint32_t height)
+{
+    uint32_t length = width * height * sizeof(PNG_PTR_TYPE);
+    image = (PNG_PTR_TYPE *)malloc(length);
+    if (image == NULL)
+    {
+        MY_DEBUG2(TAG, "Not enought memory for image:", length)
+        return 0;
+    }
+    memset(image, 0, length);
+    return length;
+}
+
+bool TheDisplay::TouchMoving()
+{
+    return touchedInProgress;
+}
+
+bool TheDisplay::Clicked()
+{
+    bool temp = oneClick;
+    oneClick = false;
+    return temp;
+}
+
+uint16_t TheDisplay::ClickPositionX()
+{
+    return touchEndX;
+}
+
+uint16_t TheDisplay::ClickPositionY()
+{
+    return touchEndY;
+}
+
+bool TheDisplay::ScrollUp()
+{
+    bool temp = scrollUp;
+    scrollUp = false;
+    return temp;
+}
+
+bool TheDisplay::ScrollDown()
+{
+    bool temp = scrollDown;
+    scrollDown = false;
+    return temp;
+}
+
+bool TheDisplay::ScrollLeft()
+{
+    bool temp = scrollLeft;
+    scrollLeft = false;
+    return temp;
+}
+
+bool TheDisplay::ScrollRight()
+{
+    bool temp = scrollRight;
+    scrollRight = false;
+    return temp;
+}
+
+uint16_t TheDisplay::ScrollDistance()
+{
+    return 0;
+}
+
+uint8_t TheDisplay::ScrollSpeedHorizontal()
+{
+    return scrollSpeedHorizontal;
+}
+
+uint8_t TheDisplay::ScrollSpeedVertical()
+{
+    return scrollSpeedVertical;
+}
+
 // *******************************************************************
 
 THE_COLOR TheDisplay::GetColorFromPalette(uint8_t colorIndex, uint8_t paletteIndex)
@@ -286,18 +420,132 @@ THE_COLOR TheDisplay::GetColorFromPalette(uint8_t colorIndex, uint8_t paletteInd
     // return paletteColor2[paletteIndex];
 }
 
+void TheDisplay::TouchMove(uint16_t x, uint16_t y)
+{
+    if (!touchedInProgress)
+    {
+        touchedInProgress = true;
+        touchStart = millis();
+        touchStartX = x;
+        touchStartY = y;
+        scrollUp = false;
+        scrollDown = false;
+        scrollLeft = false;
+        scrollRight = false;
+        scrollDistanceVertical = 0;
+        scrollDistanceHorizontal = 0;
+        scrollSpeedVertical = 0;
+        scrollSpeedHorizontal = 0;
+        oneClick = false;
+        MY_DEBUG2(TAG, "Touch START:", touchStart)
+        MY_DEBUG2(TAG, "Touch START x:", touchStartX)
+        MY_DEBUG2(TAG, "Touch START y:", touchStartY)
+    }
+    if (x < SCREEN_WIDTH)
+        touchEndX = x;
+    if (y < SCREEN_HEIGHT)
+        touchEndY = y;
+}
+
+void TheDisplay::TouchEnd()
+{
+    touchedInProgress = false;
+    touchEnd = millis();
+    MY_DEBUG2(TAG, "Touch END:", touchEnd)
+    MY_DEBUG2(TAG, "Touch END x:", touchEndX)
+    MY_DEBUG2(TAG, "Touch END y:", touchEndY)
+    int elaps = (int)(touchEnd - touchStart);
+    MY_DEBUG2(TAG, "Touch END duration:", elaps)
+    if (elaps < TOUCH_DELAY_CLICK)
+    {
+        MY_DEBUG(TAG, "Touch CLICK")
+        oneClick = true;
+        return;
+    }
+    else
+    // if (elaps > TOUCH_DELAY_SCROLL)
+    {
+        if (touchStartY > touchEndY)
+        {
+            scrollDistanceVertical = touchStartY - touchEndY;
+            if (scrollDistanceVertical > TOUCH_MOVE_DISTANCE)
+            {
+                scrollSpeedVertical = (uint8_t)((1.0f * scrollDistanceVertical) / (1.0f * elaps));
+                MY_DEBUG2(TAG, "Touch SCROLL UP:", scrollSpeedVertical)
+                scrollUp = true;
+            }
+        }
+        else
+        {
+            scrollDistanceVertical = touchEndY - touchStartY;
+            if (scrollDistanceVertical > TOUCH_MOVE_DISTANCE)
+            {
+                scrollSpeedVertical = scrollDistanceVertical / elaps;
+                MY_DEBUG2(TAG, "Touch SCROLL DOWN:", scrollSpeedVertical)
+                scrollDown = true;
+            }
+        }
+        if (touchStartX > touchEndX)
+        {
+            scrollDistanceHorizontal = touchStartX - touchEndX;
+            if (scrollDistanceHorizontal > TOUCH_MOVE_DISTANCE)
+            {
+                scrollSpeedHorizontal = scrollDistanceVertical / elaps;
+                MY_DEBUG2(TAG, "Touch SCROLL LEFT:", scrollSpeedHorizontal)
+                scrollLeft = true;
+            }
+        }
+        else
+        {
+            scrollDistanceHorizontal = touchEndX - touchStartX;
+            if (scrollDistanceHorizontal > TOUCH_MOVE_DISTANCE)
+            {
+                scrollSpeedHorizontal = scrollDistanceVertical / elaps;
+                MY_DEBUG2(TAG, "Touch SCROLL RIGHT:", scrollSpeedHorizontal)
+                scrollRight = true;
+            }
+        }
+    }
+}
+
 // *******************************************************************
 
 void TheDisplay::Loop()
 {
 #ifdef ESP32P4
-    if (!touched && touchedInProgress)
+    if (justTouch)
     {
-        if (millis() - lastTouch > TOUCH_DELAY_RELEASED)
+        justTouch = false;
+        uint16_t tx;
+        uint16_t ty;
+        if (touch.getTouch(&tx, &ty))
+        {
+            lastTouch = millis();
+            // std::string temp = std::to_string(tx) + " / " + std::to_string(ty);
+            // MY_DEBUG2TEXT(TAG, "Moving X:", temp.c_str())
+            TouchMove(tx, ty);
+        }
+        else
+        {
+            if (millis() - lastTouch > TOUCH_DELAY_RELEASED)
+                TouchEnd();
+        }
+    }
+    else
+    {
+        if (touchedInProgress)
+        {
+            if (millis() - lastTouch > TOUCH_DELAY_RELEASED)
+                TouchEnd();
+        }
+    }
+    /*if (!justTouch && touchedInProgress)
+    {
+        if (millis() - touchStart > TOUCH_DELAY_RELEASED)
         {
             touchedInProgress = false;
             // esp_rom_printf("Touch release\n");
-            if (touchX < SCREEN_WIDTH / 2)
+            if (touchStartX < SCREEN_WIDTH / 2)
             {
                 KEY_RELEASED(BUTTON_CREDIT)
             }
@@ -308,21 +556,27 @@ void TheDisplay::Loop()
         }
         else
         {
-            if (touch.getTouch(&touchX, &touchY))
+            uint16_t tx;
+            uint16_t ty;
+            if (touch.getTouch(&tx, &ty))
             {
-                // std::string temp = std::to_string(touchX) + " / " + std::to_string(touchY);
+                // std::string temp = std::to_string(touchStartX) + " / " + std::to_string(touchStartY);
                 // MY_DEBUG2TEXT(TAG, "Moving X:", temp.c_str())
+                TouchMove(tx, ty);
             }
         }
     }
-    if (touched)
+    if (justTouch)
     {
-        touched = false;
-        if (touch.getTouch(&touchX, &touchY))
+        justTouch = false;
+        uint16_t tx;
+        uint16_t ty;
+        if (touch.getTouch(&tx, &ty))
         {
-            // std::string temp = std::to_string(touchX) + " / " + std::to_string(touchY);
+            TouchMove(tx, ty);
+            // std::string temp = std::to_string(touchStartX) + " / " + std::to_string(touchStartY);
             // MY_DEBUG2TEXT(TAG, "Touch X:", temp.c_str())
-            if (touchX < SCREEN_WIDTH / 2)
+            if (touchStartX < SCREEN_WIDTH / 2)
             {
                 KEY_PRESSED(BUTTON_CREDIT)
             }
@@ -332,11 +586,11 @@ void TheDisplay::Loop()
             }
         }
     }
-
-    // if (touchInProgress && !touched)
+*/
+    // if (touchInProgress && !justTouch)
     // {
     //     touchInProgress = false;
-    //     if (touchX < SCREEN_WIDTH / 2)
+    //     if (touchStartX < SCREEN_WIDTH / 2)
     //     {
     //         KEY_RELEASED(BUTTON_CREDIT)
     //     }
@@ -347,16 +601,16 @@ void TheDisplay::Loop()
     // }
     // else
     // {
-    //     if (touched)
+    //     if (justTouch)
     //     {
-    //         touched = false;
+    //         justTouch = false;
     //         // esp_lcd_touch_read_data(tp);
-    //         if (touch.getTouch(&touchX, &touchY))
+    //         if (touch.getTouch(&touchStartX, &touchStartY))
     //         {
     //             if (!touchInProgress)
     //             {
     //                 touchInProgress = true;
-    //                 if (touchX < SCREEN_WIDTH / 2)
+    //                 if (touchStartX < SCREEN_WIDTH / 2)
     //                 {
     //                     KEY_PRESSED(BUTTON_CREDIT)
     //                 }
@@ -399,8 +653,65 @@ void TheDisplay::Loop()
         CloseWindow();
         return;
     }
-    IS_KEY_PRESSED(KEY_C, BUTTON_CREDIT)
-    IS_KEY_PRESSED(KEY_S, BUTTON_START)
+    // TOUCH
+    int tCount = GetTouchPointCount();
+    if (tCount > MAX_TOUCH_POINTS)
+        tCount = MAX_TOUCH_POINTS;
+    for (int i = 0; i < tCount; ++i)
+        touchPositions[i] = GetTouchPosition(i);
+    if (tCount > 0)
+    {
+        // touchPositions[0] = GetTouchPosition(0);
+        TouchMove(touchPositions[0].x, touchPositions[0].y);
+    }
+    else
+    {
+        // if (touchedInProgress)
+        //     TouchEnd();
+    }
+
+    if (touchedInProgress)
+    {
+        Vector2 pos = GetMousePosition();
+        TouchMove(pos.x, pos.y);
+    }
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+    {
+        Vector2 pos = GetMousePosition();
+        TouchMove(pos.x, pos.y);
+    }
+    if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
+    {
+        if (touchedInProgress)
+            TouchEnd();
+    }
+
+    if (IsKeyPressed(KEY_Q))
+    {
+        nextGame = GAME_NUMBER_IS_MENU;
+        exitGame = true;
+    }
+    if (IsKeyPressed(KEY_G))
+    {
+        gfxDebug = !gfxDebug;
+    }
+    if (IsKeyPressed(KEY_S))
+    {
+        std::string temp = std::string(PC_PATH) + "sdcard/ss/" + std::string(allGames[currentGame].folder) + ".png";
+        Image screenshot = LoadImageFromScreen(); // Capture current framebuffer
+        if (ExportImage(screenshot, temp.c_str()))
+        {
+            printf("Screenshot saved as %s\n", temp.c_str());
+        }
+        else
+        {
+            printf("Failed to save screenshot.\n");
+        }
+        UnloadImage(screenshot); // Free image memory
+                                 // TakeScreenshot(temp.c_str());
+    }
+    IS_KEY_PRESSED(KEY_FIVE, BUTTON_CREDIT)
+    IS_KEY_PRESSED(KEY_ONE, BUTTON_START)
     IS_KEY_PRESSED(KEY_LEFT, BUTTON_LEFT)
     IS_KEY_PRESSED(KEY_RIGHT, BUTTON_RIGHT)
     IS_KEY_PRESSED(KEY_UP, BUTTON_UP)
@@ -409,17 +720,38 @@ void TheDisplay::Loop()
     if (screenHeight + screenWidth == 0)
         return;
     BeginDrawing();
-    // ClearBackground(BLACK);
-    // ClearBackground(GREEN);
+    if (actualScreenHeight != GetScreenHeight() || actualScreenWidth != GetScreenWidth())
+    {
+        actualScreenHeight = GetScreenHeight();
+        actualScreenWidth = actualScreenHeight * SCREEN_RATIO;
+        if (actualScreenWidth > GetScreenWidth())
+        {
+            actualScreenWidth = GetScreenWidth();
+            actualScreenHeight = actualScreenWidth / SCREEN_RATIO;
+        }
+        SetWindowSize(actualScreenWidth, actualScreenHeight);
+        dstRec = {0.0f, 0.0f, (float)actualScreenWidth, (float)actualScreenHeight};
+        ClearBackground(BLACK);
+        // ClearBackground(GREEN);
+    }
 #endif
+    if (ScrollLeft())
+    {
+        if (currentGame != 0)
+        {
+            nextGame = 0;
+            exitGame = true;
+        }
+    }
+
     // if(screenDirtyMinX > 0) screenDirtyMinX--;
     // if(screenDirtyMinY > 0) screenDirtyMinY--;
-    //screenDirtyMaxX++;
-    //screenDirtyMaxY++;
-    //if (screenDirtyMaxX > screenWidth)
-    //    screenDirtyMaxX = screenWidth;
-    //if (screenDirtyMaxY > screenHeight)
-    //    screenDirtyMaxY = screenHeight;
+    // screenDirtyMaxX++;
+    // screenDirtyMaxY++;
+    if (screenDirtyMaxX > screenWidth)
+        screenDirtyMaxX = screenWidth;
+    if (screenDirtyMaxY > screenHeight)
+        screenDirtyMaxY = screenHeight;
     //  DRAW SCREEN
     //  currentFrameBuffer = (currentFrameBuffer + 1) % SCREEN_FRAME_BUFFER;
     uint32_t index = 0;
@@ -430,13 +762,15 @@ void TheDisplay::Loop()
         {
             index = y * screenWidth + x;
             // #ifdef ESP32P4
-            if (screenData[index] != screenDataOld[index])
+            // if (screenData[index] != screenDataOld[index])
+            if (dirtybuffer[index])
             {
                 // #endif
                 uint16_t posX = screenPosX + x * screenZoomX;
                 THE_COLOR color = screenData[index];
 #ifndef ESP32P4
-                Color pixelColor = GetColor(color);
+                // Color pixelColor = GetColor(color);
+                Color pixelColor = ConvertRGB565ToRGB888(color);
 #endif
                 for (uint16_t zx = 0; zx < screenZoomX; zx++)
                 {
@@ -445,59 +779,26 @@ void TheDisplay::Loop()
 #ifdef ESP32P4
                         fbs[currentFrameBuffer][posX + zx + (posY + zy) * SCREEN_WIDTH] = color;
 #else
-                        // DrawPixel(posX + zx, posY + zy, pixelColor);
-                        pixels[posX + zx + (posY + zy) * SCREEN_WIDTH] = pixelColor;
+                        if (dirtybuffer[index] == DIRTY_TRANSPARENT)
+                        {
+                            uint32_t p = posX + zx + (posY + zy) * SCREEN_WIDTH;
+                            pixels[posX + zx + (posY + zy) * SCREEN_WIDTH] = ConvertRGB565ToRGB888(pngImage[p]);
+                        }
+                        else
+                        {
+                            pixels[posX + zx + (posY + zy) * SCREEN_WIDTH] = pixelColor;
+                        }
 #endif
                     }
                 }
                 // #ifdef ESP32P4
+                dirtybuffer[index] = DIRTY_NOT;
             }
             // #endif
             index++;
         }
     }
 
-#ifdef DEBUG_DISPLAY_GFX
-    if (hasGfx)
-    {
-        for (uint8_t g = 0; g < countGfxElement; g++)
-        {
-            GfxElement *element = allGfx[g];
-            for (uint16_t z = 0; z < element->total_elements; z++)
-            // for (uint16_t z = 0; z < 4; z++)
-            {
-                for (uint16_t y = 0; y < element->height; y++)
-                {
-                    uint16_t posY = 280 + g * 150 + (z * element->width / screenWidth) * element->height * screenZoomY + y * screenZoomY;
-                    uint32_t posX = ((z * element->width) % screenWidth) * screenZoomX;
-                    uint8_t *pointerLine = element->gfxdata->line[y + z * element->height];
-                    for (uint16_t x = 0; x < element->gfxdata->width; x++)
-                    {
-                        uint8_t pixel = pointerLine[x];
-                        THE_COLOR color = colorRGB[pixel];
-                        ;
-                        // if (pixel == 0)
-                        //     color = colorRGB[0];
-                        // else
-                        //{
-                        //     color = colorRGB[2];
-                        // }
-#ifndef ESP32P4
-                        Color pixelColor = GetColor(color);
-#endif
-                        for (uint16_t zx = 0; zx < screenZoomX; zx++)
-                        {
-                            for (uint16_t zy = 0; zy < screenZoomY; zy++)
-                            {
-                                DrawPixel(posX + x * screenZoomX + zx, posY + zy, pixelColor);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-#endif
     //
     /*
     if (hasSprites)
@@ -542,7 +843,6 @@ void TheDisplay::Loop()
 #ifdef ESP32P4
                                 fbs[currentFrameBuffer][x + zx + deltaX + (y + zy + deltaY) * SCREEN_WIDTH] = c;
 #else
-                                // DrawPixel(x + zx + (p % spriteWidth), y + zy + (p / spriteWidth), GetColor(c));
                                 DrawPixel(x + zx + deltaX, y + zy + deltaY, GetColor(c));
 #endif
                             }
@@ -553,139 +853,191 @@ void TheDisplay::Loop()
             }
         }
     }*/
-    memcpy(screenDataOld, screenData, screenLength);
+    // memcpy(screenDataOld, screenData, screenLength);
+    // memcpy(dirtybuffer, screenData, screenLength);
     screenDirtyMinX = screenWidth;
     screenDirtyMaxX = 0;
     screenDirtyMinY = screenHeight;
     screenDirtyMaxY = 0;
-
-#ifdef DEBUG_DISPLAY_COLOR
-    // DEBUG color
-    if (hasColor)
+    if (gfxDebug)
     {
-        uint16_t dimension = 30;
-        for (uint16_t c = 0; c < colorMemorySize; c++)
+        uint32_t debugStartY = 0;
+#ifdef DEBUG_DISPLAY_COLOR
+        // DEBUG color
+        if (hasColor)
         {
-            THE_COLOR color = colorRGB[c];
-#ifndef ESP32P4
-            Color pixelColor = GetColor(color);
-#endif
-            uint32_t posX = (c * dimension) % SCREEN_WIDTH;
-            uint32_t posY = ((c * dimension) / SCREEN_WIDTH) * dimension;
-            for (uint32_t x = 0; x < dimension; x++)
+            uint16_t dimension = 30;
+            uint16_t max = MIN(colorMemorySize, 40);
+            debugStartY = ((max * dimension) / SCREEN_WIDTH) * dimension + dimension;
+            for (uint16_t c = 0; c < max /*colorMemorySize*/; c++)
             {
-                for (uint32_t y = 0; y < dimension; y++)
-                {
-#ifdef ESP32P4
-                    fbs[currentFrameBuffer][posX + x + (posY + y) * SCREEN_WIDTH] = color;
-#else
-                    DrawPixel(posX + x, posY + y, pixelColor);
+                THE_COLOR color = colorRGB[c];
+#ifndef ESP32P4
+                Color pixelColor = GetColor(color);
 #endif
+                uint32_t posX = (c * dimension) % SCREEN_WIDTH;
+                uint32_t posY = ((c * dimension) / SCREEN_WIDTH) * dimension;
+                for (uint32_t x = 0; x < dimension; x++)
+                {
+                    for (uint32_t y = 0; y < dimension; y++)
+                    {
+#ifdef ESP32P4
+                        fbs[currentFrameBuffer][posX + x + (posY + y) * SCREEN_WIDTH] = color;
+#else
+                        pixels[posX + x + (posY + y) * SCREEN_WIDTH] = pixelColor;
+#endif
+                    }
                 }
             }
         }
-    }
 #endif
 #ifdef DEBUG_DISPLAY_PALETTE
-    // DEBUG palettes
-    if (hasPalette)
-    {
-        uint16_t dimension = 30; // 15;
-        // for (uint8_t p = 0; p < paletteColorSize * 4; p++)
-        for (uint16_t p = 0; p < paletteColorSize; p++)
+        // DEBUG palettes
+        if (hasPalette)
         {
-            THE_COLOR color = paletteColor[p];
-#ifndef ESP32P4
-            Color pixelColor = GetColor(color);
-#endif
-            uint32_t posX = (p * dimension) % SCREEN_WIDTH;
-            uint32_t posY = 40 + ((p * dimension) / SCREEN_WIDTH) * dimension;
-
-            for (uint32_t x = 0; x < dimension; x++)
+            uint16_t dimension = 30; // 15;
+            uint16_t max = MIN(paletteColorSize, 40);
+            debugStartY += ((max * dimension) / SCREEN_WIDTH) * dimension + dimension;
+            for (uint16_t p = 0; p < max /*paletteColorSize*/; p++)
             {
-                for (uint32_t y = 0; y < dimension; y++)
-                {
-                    // Draw the color
-#ifdef ESP32P4
-                    fbs[currentFrameBuffer][posX + x + (posY + y) * SCREEN_WIDTH] = color;
-#else
-                    DrawPixel(posX + x, posY + y, pixelColor);
+                THE_COLOR color = paletteColor[p];
+#ifndef ESP32P4
+                Color pixelColor = GetColor(color);
 #endif
+                uint32_t posX = (p * dimension) % SCREEN_WIDTH;
+                uint32_t posY = debugStartY + ((p * dimension) / SCREEN_WIDTH) * dimension;
+
+                for (uint32_t x = 0; x < dimension; x++)
+                {
+                    for (uint32_t y = 0; y < dimension; y++)
+                    {
+                        // Draw the color
+#ifdef ESP32P4
+                        fbs[currentFrameBuffer][posX + x + (posY + y) * SCREEN_WIDTH] = color;
+#else
+                        pixels[posX + x + (posY + y) * SCREEN_WIDTH] = pixelColor;
+
+#endif
+                    }
                 }
             }
-            DrawPixel(posX, posY, WHITE);
         }
-    }
+#endif
+
+#ifdef DEBUG_DISPLAY_GFX
+        if (hasGfx)
+        {
+            for (uint8_t g = 0; g < countGfxElement; g++)
+            {
+                GfxElement *element = allGfx[g];
+                for (uint16_t z = 0; z < element->total_elements; z++)
+                // for (uint16_t z = 0; z < 4; z++)
+                {
+                    for (uint16_t y = 0; y < element->height; y++)
+                    {
+                        uint16_t posY = 280 + g * 150 + (z * element->width / screenWidth) * element->height * screenZoomY + y * screenZoomY;
+                        uint32_t posX = ((z * element->width) % screenWidth) * screenZoomX;
+                        uint8_t *pointerLine = element->gfxdata->line[y + z * element->height];
+                        for (uint16_t x = 0; x < element->gfxdata->width; x++)
+                        {
+                            uint8_t pixel = pointerLine[x];
+                            THE_COLOR color = colorRGB[pixel];
+                            ;
+                            // if (pixel == 0)
+                            //     color = colorRGB[0];
+                            // else
+                            //{
+                            //     color = colorRGB[2];
+                            // }
+#ifndef ESP32P4
+                            Color pixelColor = GetColor(color);
+#endif
+                            for (uint16_t zx = 0; zx < screenZoomX; zx++)
+                            {
+                                for (uint16_t zy = 0; zy < screenZoomY; zy++)
+                                {
+#ifdef ESP32P4
+                                    fbs[currentFrameBuffer][posX + x * screenZoomX + zx + (posY + zy) * SCREEN_WIDTH] = color;
+#else
+                                    pixels[posX + x * screenZoomX + zx + (posY + zy) * SCREEN_WIDTH] = pixelColor;
+#endif
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 #endif
 #ifdef DEBUG_DISPLAY_TILES
-    // DEBUG tiles
-    if (hasTiles)
-    {
-        uint16_t theWidth = 1.5 * tileWidth;
-        uint16_t theHeight = 1.5 * tileHeight;
-        for (uint16_t n = 0; n < tilesCount; n++)
+        // DEBUG tiles
+        if (hasTiles)
         {
-            uint16_t posX = (n * theWidth) % SCREEN_WIDTH;
-            uint16_t posY = 40 + 4 * 15 + 10 + ((n * theWidth) / SCREEN_WIDTH) * theHeight;
-
-            uint32_t at = n * tileWidth * tileHeight;
-            for (uint16_t p = 0; p < tileWidth * tileHeight; p++)
+            uint16_t theWidth = 1.5 * tileWidth;
+            uint16_t theHeight = 1.5 * tileHeight;
+            for (uint16_t n = 0; n < tilesCount; n++)
             {
-                uint8_t colorIndex = tileGfx[at];
+                uint16_t posX = (n * theWidth) % SCREEN_WIDTH;
+                uint16_t posY = 40 + 4 * 15 + 10 + ((n * theWidth) / SCREEN_WIDTH) * theHeight;
+
+                uint32_t at = n * tileWidth * tileHeight;
+                for (uint16_t p = 0; p < tileWidth * tileHeight; p++)
+                {
+                    uint8_t colorIndex = tileGfx[at];
 #ifdef ESP32P4
-                fbs[currentFrameBuffer][posX + (p % tileWidth) + (posY + (p / tileWidth)) * SCREEN_WIDTH] = GetColor(GetColorFromPalette(colorIndex, 1));
+                    fbs[currentFrameBuffer][posX + (p % tileWidth) + (posY + (p / tileWidth)) * SCREEN_WIDTH] = GetColor(GetColorFromPalette(colorIndex, 1));
 #else
-                DrawPixel(posX + (p % tileWidth), posY + (p / tileWidth), GetColor(GetColorFromPalette(colorIndex, 1)));
+                    DrawPixel(posX + (p % tileWidth), posY + (p / tileWidth), GetColor(GetColorFromPalette(colorIndex, 1)));
 #endif
-                at++;
+                    at++;
+                }
+                DrawPixel(posX, posY, WHITE);
             }
-            DrawPixel(posX, posY, WHITE);
         }
-    }
 #endif
 #ifdef DEBUG_DISPLAY_SPRITES
-    // DEBUG sprites
-    if (hasSprites)
-    {
-        uint16_t theWidth = 1.5 * spriteWidth;
-        uint16_t theHeight = 1.5 * spriteHeight;
-        for (uint16_t n = 0; n < spritesCount; n++)
+        // DEBUG sprites
+        if (hasSprites)
         {
-            uint16_t posX = (n * theWidth) % SCREEN_WIDTH;
-            uint16_t posY = 200 + ((n * theWidth) / SCREEN_WIDTH) * theHeight;
-
-            uint32_t at = n * spriteWidth * spriteHeight;
-            for (uint16_t p = 0; p < spriteWidth * spriteHeight; p++)
+            uint16_t theWidth = 1.5 * spriteWidth;
+            uint16_t theHeight = 1.5 * spriteHeight;
+            for (uint16_t n = 0; n < spritesCount; n++)
             {
-                uint8_t colorIndex = spriteGfx[at];
+                uint16_t posX = (n * theWidth) % SCREEN_WIDTH;
+                uint16_t posY = 200 + ((n * theWidth) / SCREEN_WIDTH) * theHeight;
+
+                uint32_t at = n * spriteWidth * spriteHeight;
+                for (uint16_t p = 0; p < spriteWidth * spriteHeight; p++)
+                {
+                    uint8_t colorIndex = spriteGfx[at];
 #ifdef ESP32P4
-                fbs[currentFrameBuffer][posX + (p % spriteWidth) + (posY + (p / spriteWidth)) * SCREEN_WIDTH] = GetColor(GetColorFromPalette(colorIndex, 1));
+                    fbs[currentFrameBuffer][posX + (p % spriteWidth) + (posY + (p / spriteWidth)) * SCREEN_WIDTH] = GetColor(GetColorFromPalette(colorIndex, 1));
 #else
-                // DrawPixel(posX + (p % spriteWidth), posY + (p / spriteWidth), GetColor(GetColorFromPalette(colorIndex, 1)));
-                THE_COLOR color = colorRGB[colorIndex];
-                DrawPixel(posX + (p % spriteWidth), posY + (p / spriteWidth), GetColor(color)); // colorIndex));
+                    THE_COLOR color = colorRGB[colorIndex];
+                    DrawPixel(posX + (p % spriteWidth), posY + (p / spriteWidth), GetColor(color)); // colorIndex));
 #endif
-                at++;
+                    at++;
+                }
+
+                DrawPixel(posX, posY, WHITE);
             }
-
-            DrawPixel(posX, posY, WHITE);
         }
-    }
 #endif
-
+    } // gfxDebug
 #ifdef ESP32P4
     esp_lcd_panel_draw_bitmap(panel_handle, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, fbs[currentFrameBuffer]);
     xSemaphoreTake(refresh_finish, portMAX_DELAY);
 #else
-#ifndef NO_FPS
     UpdateTexture(fb_texture, pixels);
-    DrawTexture(fb_texture, 0, 0, WHITE);
+    // DrawTexture(fb_texture, 0, 0, WHITE);
+    DrawTexturePro(fb_texture, srcRec, dstRec, origin, 0.0f, WHITE);
+#ifndef NO_FPS
     // ClearRectangle(10, SCREEN_HEIGHT - 20, 30, 20);
     //  Print(std::to_string(lastFrameCount), 10, SCREEN_HEIGHT - 20);
     // ClearRectangle(SCREEN_WIDTH - 80, SCREEN_HEIGHT - 20, 80, 20);
     // DrawFPS(SCREEN_WIDTH - 80, SCREEN_HEIGHT - 20);
-    ClearRectangle(SCREEN_WIDTH - 80, 10, 80, 20);
-    DrawFPS(SCREEN_WIDTH - 80, 10);
+    ClearRectangle(actualScreenWidth - 80, 10, 80, 20);
+    DrawFPS(actualScreenWidth - 80, 10);
 #endif
     EndDrawing();
 #endif
@@ -763,23 +1115,23 @@ void TheDisplay::EndWrite()
 
 // *******************************************************************
 
-void TheDisplay::DrawPng(uint8_t *pngImage, int16_t width, int16_t height)
-{
-#ifdef ESP32P4
-    //// gfx->draw24bitRGBBitmap(0, 0, pngImage, width, height);
-    // gfx->draw16bitRGBBitmap(0, 0, reinterpret_cast<uint16_t *>(pngImage), width, height);
-#endif
-}
+// void TheDisplay::DrawPng(uint8_t *pngImage, int16_t width, int16_t height)
+//{
+// #ifdef ESP32P4
+//     //// gfx->draw24bitRGBBitmap(0, 0, pngImage, width, height);
+//     // gfx->draw16bitRGBBitmap(0, 0, reinterpret_cast<uint16_t *>(pngImage), width, height);
+// #endif
+// }
 
 // *******************************************************************
 
-void TheDisplay::Pixel(uint16_t x, uint16_t y, uint16_t color)
-{
-#ifdef ESP32P4
-    // gfx->writePixel(x, y, color);
-    //// gfx->drawPixel(x, y, color);
-#endif
-}
+// void TheDisplay::Pixel(uint16_t x, uint16_t y, uint16_t color)
+//{
+// #ifdef ESP32P4
+//     // gfx->writePixel(x, y, color);
+//     //// gfx->drawPixel(x, y, color);
+// #endif
+// }
 #endif
 
 // *******************************************************************
@@ -794,8 +1146,11 @@ THE_COLOR TheDisplay::Rgb888ToRgb565(uint8_t red, uint8_t green, uint8_t blue)
     // Combine into a single 16-bit value
     return (r << 11) | (g << 5) | b;
 #else
-    return (red << 24) | (green << 16) | (blue << 8) | 255;
-    // Color color = (Color){red, green, blue, 255};
-    // return color;
+    // return (red << 24) | (green << 16) | (blue << 8) | 255;
+    uint16_t r = (red >> 3) & 0x1F;   // 5 bits for red
+    uint16_t g = (green >> 2) & 0x3F; // 6 bits for green
+    uint16_t b = (blue >> 3) & 0x1F;  // 5 bits for blue
+    // Combine into a single 16-bit value
+    return (r << 11) | (g << 5) | b;
 #endif
 }

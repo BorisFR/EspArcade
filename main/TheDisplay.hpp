@@ -41,6 +41,7 @@
 #endif
 #include "TheMemory.h"
 #include "TheTools.hpp"
+#include "GameDefinition.h"
 #include <string>
 
 #ifdef ESP32P4
@@ -71,8 +72,13 @@
 #else
 #define SCREEN_WIDTH (800)
 #define SCREEN_HEIGHT (1280)
+#define SCREEN_RATIO (float)((float)SCREEN_WIDTH / (float)SCREEN_HEIGHT)
+#define WINDOW_HEIGHT (float)(800.0f)
+#define WINDOW_WIDTH ((float)WINDOW_HEIGHT * (float)SCREEN_RATIO)
 #include "raylib.h"
 #endif
+
+#define MAX_TOUCH_POINTS 10
 
 #define IS_KEY_PRESSED(key, button)     \
     if (IsKeyPressed(key))              \
@@ -106,22 +112,30 @@
         keyChanged[button] = true;  \
     }
 
-// #define DEBUG_DISPLAY_COLOR
-// #define DEBUG_DISPLAY_PALETTE
-// #define DEBUG_DISPLAY_GFX
+#define DEBUG_DISPLAY_COLOR
+#define DEBUG_DISPLAY_PALETTE
+#define DEBUG_DISPLAY_GFX
 // #define DEBUG_DISPLAY_TILES
 // #define DEBUG_DISPLAY_SPRITES
 
 #ifdef ESP32P4
-//#define LIMIT_FPS
-// #define NO_FPS
-//#define NO_FPS_ON_CONSOLE
+// #define LIMIT_FPS
+//  #define NO_FPS
+// #define NO_FPS_ON_CONSOLE
 #else
-#define FPS_LIMIT 120
-#define LIMIT_FPS
+#define FPS_LIMIT 60
+// #define LIMIT_FPS
 // #define NO_FPS
 #define NO_FPS_ON_CONSOLE
 #endif
+
+#ifdef ESP32P4
+#define TOUCH_DELAY_RELEASED 20
+#else
+#endif
+#define TOUCH_DELAY_CLICK 80
+//#define TOUCH_DELAY_SCROLL 150
+#define TOUCH_MOVE_DISTANCE 150
 
 class TheDisplay
 {
@@ -137,6 +151,22 @@ public:
     uint32_t GetPaddingLeftForZoom(uint32_t zoomX);
     uint32_t GetPaddingTopForZoom(uint32_t zoomY);
     void DisplayPng(uint32_t atX, uint32_t atY);
+    void FillScreen(THE_COLOR color);
+
+    bool CreateBackground();
+    uint32_t CreateEmptyImage(PNG_PTR_TYPE *image, uint32_t width, uint32_t height);
+
+    bool TouchMoving();
+    bool Clicked();
+    uint16_t ClickPositionX();
+    uint16_t ClickPositionY();
+    bool ScrollUp();
+    bool ScrollDown();
+    bool ScrollLeft();
+    bool ScrollRight();
+    uint16_t ScrollDistance();
+    uint8_t ScrollSpeedHorizontal();
+    uint8_t ScrollSpeedVertical();
 
 #ifdef ESP32P4
     THE_COLOR ConvertRGB565ToRGB888(uint16_t color565);
@@ -148,8 +178,8 @@ public:
     void Clear();
     void BeginWrite();
     void EndWrite();
-    void DrawPng(uint8_t *pngImage, int16_t width, int16_t height);
-    void Pixel(uint16_t x, uint16_t y, uint16_t color);
+    // void DrawPng(uint8_t *pngImage, int16_t width, int16_t height);
+    // void Pixel(uint16_t x, uint16_t y, uint16_t color);
 
     void Print(std::string text, uint32_t x, uint32_t y);
     Color ConvertRGB565ToRGB888(uint16_t color565);
@@ -163,6 +193,7 @@ protected:
 private:
     const char *TAG = "TheDisplay";
     struct timeval theStartTime;
+    bool gfxDebug = false;
 
     bool mustExit;
 #ifdef LIMIT_FPS
@@ -192,14 +223,41 @@ private:
     // esp_lcd_panel_io_handle_t tp_io_handle = NULL;
     // esp_lcd_touch_handle_t touch_handle;
     gsl3680_touch touch;
-    uint16_t touchX;
-    uint16_t touchY;
+    // uint16_t touchX;
+    // uint16_t touchY;
 #else
     Image fb_image;
     Color *pixels;
     Texture2D fb_texture;
+    Rectangle srcRec;
+    Rectangle dstRec;
+    Vector2 origin;
+    uint32_t actualScreenWidth;
+    uint32_t actualScreenHeight;
 
+    Vector2 touchPositions[MAX_TOUCH_POINTS] = {0};
 #endif
+
+    void TouchMove(uint16_t x, uint16_t y);
+    void TouchEnd();
+
+    bool touchedInProgress;
+    unsigned long lastTouch;
+    unsigned long touchStart;
+    unsigned long touchEnd;
+    uint16_t touchStartX;
+    uint16_t touchStartY;
+    uint16_t touchEndX;
+    uint16_t touchEndY;
+    bool scrollUp;
+    bool scrollDown;
+    bool scrollLeft;
+    bool scrollRight;
+    uint16_t scrollDistanceVertical;
+    uint16_t scrollDistanceHorizontal;
+    uint8_t scrollSpeedVertical;
+    uint8_t scrollSpeedHorizontal;
+    bool oneClick;
 };
 
 #endif // THE_DISPLAY_HPP

@@ -53,24 +53,24 @@ TheGame::~TheGame()
     spritesCount = 0;
     screenWidth = 0;
     screenHeight = 0;
-    free(screenData);
-    free(screenDataOld);
-    free(boardMemory);
-    free(gfxMemory);
-    free(colorMemory);
-    free(paletteMemory);
-    // free(tileMemory);
-    // free(spriteMemory);
-    free(soundMemory);
-    free(colorRGB);
-    if (paletteColor != NULL)
-        free(paletteColor);
+    FREE(screenData);
+    FREE(dirtybuffer);
+    // FREE(screenDataOld);
+    FREE(boardMemory);
+    FREE(gfxMemory);
+    FREE(colorMemory);
+    FREE(paletteMemory);
+    // FREE(tileMemory);
+    // FREE(spriteMemory);
+    FREE(soundMemory);
+    FREE(colorRGB);
+    FREE(paletteColor);
     // if (tileGfx != NULL)
-    //     free(tileGfx);
+    //     FREE(tileGfx);
     // if (spriteGfx != NULL)
-    //     free(spriteGfx);
-    free(memoryReadHandler);
-    free(memoryWriteHandler);
+    //     FREE(spriteGfx);
+    FREE(memoryReadHandler);
+    FREE(memoryWriteHandler);
     for (int16_t i = 0; i < countInportPortReadFunction; i++)
         delete InputPortRead[i];
     for (int16_t i = 0; i < countInportPortWriteFunction; i++)
@@ -84,7 +84,8 @@ void TheGame::Setup(TheDisplay &display, TheSdCard &sdCard)
 {
     this->display = &display;
     MY_DEBUG2TEXT(TAG, GAME_NAME, "setup");
-    froggerWater = display.Rgb888ToRgb565(0x00, 0x00, 0x47);
+    exitGame = false;
+    // froggerWater = display.Rgb888ToRgb565(0x00, 0x00, 0x47);
     if (!Initialize(display, sdCard))
     {
         MY_DEBUG2TEXT(TAG, GAME_NAME, "could not be setup");
@@ -113,23 +114,23 @@ void TheGame::Setup(TheDisplay &display, TheSdCard &sdCard)
     uint8_t portValue = 0;
     while (!finish)
     {
-        MY_DEBUG2(TAG, "portValue=", portValue)
+        //MY_DEBUG2(TAG, "portValue=", portValue)
         switch (allGames[currentGame].machine.inputPorts[i].type)
         {
         case IPT_END:
             if (portNumber >= 0)
                 machineInputPort.InputPortSet(portNumber, portValue);
             finish = true;
-            MY_DEBUG2(TAG, "==> Port ", portNumber)
-            MY_DEBUG2(TAG, "    with default value ", portValue)
+            //MY_DEBUG2(TAG, "==> Port ", portNumber)
+            //MY_DEBUG2(TAG, "    with default value ", portValue)
             continue;
             break;
         case IPT_PORT:
             if (portNumber >= 0)
             {
                 machineInputPort.InputPortSet(portNumber, portValue);
-                MY_DEBUG2(TAG, "=> Port ", portNumber)
-                MY_DEBUG2(TAG, "    with default value ", portValue)
+                //MY_DEBUG2(TAG, "=> Port ", portNumber)
+                //MY_DEBUG2(TAG, "    with default value ", portValue)
             }
             portNumber++;
             portValue = 0;
@@ -183,12 +184,12 @@ void TheGame::Setup(TheDisplay &display, TheSdCard &sdCard)
             PORT_BIT_VALUE
             break;
         case IPT_DIPSWITCH_NAME:
-            MY_DEBUG2TEXT(TAG, "IPT_DIPSWITCH_NAME", allGames[currentGame].machine.inputPorts[i].name)
+            //MY_DEBUG2TEXT(TAG, "IPT_DIPSWITCH_NAME", allGames[currentGame].machine.inputPorts[i].name)
             PORT_SWITCH_DEFAULT_VALUE(allGames[currentGame].machine.inputPorts[i].default_value)
             PORT_SWITCH_VALUE
             break;
         case IPT_DIPSWITCH_SETTING:
-            MY_DEBUG2TEXT(TAG, "IPT_DIPSWITCH_SETTING", allGames[currentGame].machine.inputPorts[i].name)
+            //MY_DEBUG2TEXT(TAG, "IPT_DIPSWITCH_SETTING", allGames[currentGame].machine.inputPorts[i].name)
             PORT_SWITCH_VALUE
             break;
         default:
@@ -309,22 +310,25 @@ void TheGame::Setup(TheDisplay &display, TheSdCard &sdCard)
             finish = true;
             continue;
         }
+        // point a user variable here
+        if (allGames[currentGame].machine.writeAddress[countMemoryWriteFunction].base != NULL)
+        {
+            *allGames[currentGame].machine.writeAddress[countMemoryWriteFunction].base = &boardMemory[allGames[currentGame].machine.writeAddress[countMemoryWriteFunction].start];
+        }
+        // calculate the memory size of this area
+        if (allGames[currentGame].machine.writeAddress[countMemoryWriteFunction].size != NULL)
+        {
+            *allGames[currentGame].machine.writeAddress[countMemoryWriteFunction].size = allGames[currentGame].machine.writeAddress[countMemoryWriteFunction].end - allGames[currentGame].machine.writeAddress[countMemoryWriteFunction].start;
+        }
+        // create the handler for the full area
         for (uint32_t p = allGames[currentGame].machine.writeAddress[countMemoryWriteFunction].start; p <= allGames[currentGame].machine.writeAddress[countMemoryWriteFunction].end; p++)
         {
             memoryWriteHandler[p].handler = allGames[currentGame].machine.writeAddress[countMemoryWriteFunction].handler;
-        }
-        if (allGames[currentGame].machine.writeAddress[countMemoryWriteFunction].base)
-        {
-            uint32_t size = allGames[currentGame].machine.writeAddress[countMemoryWriteFunction].end - allGames[currentGame].machine.writeAddress[countMemoryWriteFunction].start;
-            if (allGames[currentGame].machine.writeAddress[countMemoryWriteFunction].size)
-                *allGames[currentGame].machine.writeAddress[countMemoryWriteFunction].size = size;
-            *allGames[currentGame].machine.writeAddress[countMemoryWriteFunction].base = (uint8_t *)malloc(size * sizeof(uint8_t));
-            if (allGames[currentGame].machine.writeAddress[countMemoryWriteFunction].base == NULL)
-            {
-                MY_DEBUG(TAG, "Error allocation video memory")
-                return;
-            }
-            memset(*allGames[currentGame].machine.writeAddress[countMemoryWriteFunction].base, 0, size);
+            // if user put a variable, we adapt the offset
+            if (allGames[currentGame].machine.writeAddress[countMemoryWriteFunction].base != NULL)
+                memoryWriteHandler[p].toZero = allGames[currentGame].machine.writeAddress[countMemoryWriteFunction].start;
+            else
+                memoryWriteHandler[p].toZero = 0;
         }
         countMemoryWriteFunction++;
     }
@@ -383,7 +387,7 @@ uint32_t TheGame::GetCrc32(uint16_t offset, uint16_t length, uint8_t *fromMemory
 
 bool TheGame::Initialize(TheDisplay &display, TheSdCard &sdCard)
 {
-    MY_DEBUG2TEXT(TAG, "Loading all ROMs from folder:", GAME_FOLDER);
+    MY_DEBUG2TEXT(TAG, "Loading all ROMs from folder:", GAME_FOLDER)
     screenWidth = GAME_SCREEN_WIDTH;
     screenHeight = GAME_SCREEN_HEIGHT;
     screenDirtyMinX = screenWidth;
@@ -398,13 +402,20 @@ bool TheGame::Initialize(TheDisplay &display, TheSdCard &sdCard)
         return false;
     }
     memset(screenData, 0, screenLength);
-    screenDataOld = (THE_COLOR *)malloc(screenLength);
-    if (screenDataOld == NULL)
+    dirtybuffer = (uint8_t *)malloc(screenLength);
+    if (dirtybuffer == NULL)
     {
-        MY_DEBUG(TAG, "Error allocating old screen memory");
+        MY_DEBUG(TAG, "Error allocating dirtybuffer memory");
         return false;
     }
-    memset(screenDataOld, 0, screenLength);
+    memset(dirtybuffer, DIRTY_TRANSPARENT, screenLength);
+    // screenDataOld = (THE_COLOR *)malloc(screenLength);
+    // if (screenDataOld == NULL)
+    // {
+    //     MY_DEBUG(TAG, "Error allocating old screen memory");
+    //     return false;
+    // }
+    // memset(screenDataOld, 0, screenLength);
     screenBitmap = (THE_COLOR *)malloc(screenLength);
     if (screenBitmap == NULL)
     {
@@ -436,6 +447,7 @@ bool TheGame::Initialize(TheDisplay &display, TheSdCard &sdCard)
                     return false;
                 }
                 memset(boardMemory, 0, boardMemorySize);
+                // romptr[0] = boardMemory;
                 toMemory = boardMemory;
                 break;
             case ROM_GFX:
@@ -535,6 +547,8 @@ bool TheGame::Initialize(TheDisplay &display, TheSdCard &sdCard)
     if (i == 0)
     {
         MY_DEBUG(TAG, "No ROM found");
+        if (currentGame == GAME_NUMBER_IS_MENU)
+            return true;
         return false;
     }
     // if we need to decode encrypt rom
@@ -818,7 +832,7 @@ GfxElement *TheGame::DecodeGfxElement(const uint8_t *fromMemory, uint32_t offset
         bitmap = osd_new_bitmap(element->width, gfxLayout->total * element->height, 8);
         if (bitmap == 0)
         {
-            free(element);
+            FREE(element);
             return 0;
         }
     }
@@ -875,14 +889,14 @@ osd_bitmap *TheGame::osd_new_bitmap(int width, int height, int depth) // ASG 980
         uint8_t *bitmapLines = (uint8_t *)malloc((height + 2 * safety) * rowlen);
         if (bitmapLines == 0)
         {
-            free(bitmap);
+            FREE(bitmap);
             return 0;
         }
         bitmap->line = (uint8_t **)malloc(height * sizeof(uint8_t *));
         if (bitmap->line == 0)
         {
-            free(bitmapLines);
-            free(bitmap);
+            FREE(bitmapLines);
+            FREE(bitmap);
             return 0;
         }
         for (i = 0; i < height; i++)
@@ -926,6 +940,8 @@ bool TheGame::DecodeAllGfx(const GfxDecodeInfo info[])
             allGfx[i]->total_colors = info[i].total_color_codes;
             MY_DEBUG2(TAG, "total_colors ", allGfx[i]->total_colors)
             break;
+        default:
+            MY_DEBUG2(TAG, "*** GfxDecodeInfo, bad rom index:", info[i].memory_region)
         }
     }
     return true;
@@ -948,4 +964,10 @@ void TheGame::KeyChange(uint8_t button)
         machineInputPort.InputPortUpdate(keyPort[button], keyBit[button], keyValuePressed[button]);
     }
     // MY_DEBUG2(TAG, "KEY after", InputPorts[keyPort[button]])
+}
+
+void TheGame::Exit(uint8_t next)
+{
+    exitGame = true;
+    nextGame = next;
 }

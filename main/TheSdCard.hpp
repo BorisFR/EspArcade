@@ -32,7 +32,6 @@
 #include <sys/dirent.h>
 #include <algorithm>
 #else
-#define PC_PATH "D:/DEV/RayLibArcade/"
 #endif
 #include <string>
 
@@ -57,8 +56,9 @@ public:
 #ifdef USE_LIB_PNG    
     bool LoadPngFile(const char *filename);
 #endif    
-#ifdef USE_LIB_JPG    
+#ifdef USE_LIB_JPG
     bool LoadJpgFile(const char *filename);
+    bool LoadJpgFileTo(PNG_PTR_TYPE *image, const char *filename, uint32_t lineWidth);
 #endif    
 
 private:

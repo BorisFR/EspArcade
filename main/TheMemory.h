@@ -5,6 +5,8 @@
 
 #include "MyDefine.h"
 
+extern uint8_t countGames;
+
 #define LOW 0
 #define HIGH 1
 
@@ -14,6 +16,8 @@
 #include "esp_log.h"
 #include <sys/time.h>
 #else
+#define PC_PATH "D:/DEV/RayLibArcade/"
+#define MOUNT_POINT "D:/DEV/RayLibArcade/sdcard/"
 #endif
 #include <stdbool.h>
 #include <stdint.h>
@@ -25,12 +29,12 @@
 #define THE_COLOR uint16_t
 #else
 #define COLOR_TYPE Color
-#define THE_COLOR uint32_t
+#define THE_COLOR uint16_t
 #endif
 
 #define MAX_GFX_ELEMENTS 5
-//#define MAX_GFX_ELEMENTS 32
-// #define MAX_MEMORY_REGIONS 10
+// #define MAX_GFX_ELEMENTS 32
+//  #define MAX_MEMORY_REGIONS 10
 
 // https://github.com/squidrpi/mame4all-pi/blob/bf71c5fdd2e2bbdccb36995e918b99ae7b01dc7a/src/memory.h#L253
 // #define INLINE inline
@@ -39,14 +43,32 @@
 #define UINT16 uint16_t
 #define UINT32 uint32_t
 
+extern uint8_t *videoram;
+extern int videoram_size;
+extern uint8_t *colorram;
+extern uint8_t *spriteram;
+extern int spriteram_size;
+extern uint8_t *spriteram_2;
+extern int spriteram_size_2;
+
+#define input_port_0_r readPort0
+#define input_port_1_r readPort1
+#define input_port_2_r readPort2
+#define input_port_3_r readPort3
+
 typedef struct
 {
 	int (*handler)(int offset);
 } ReadHandler;
 
+#define WRITE_HANDLER(function) void function(int offset, int data)
+WRITE_HANDLER(videoram_w);
+WRITE_HANDLER(colorram_w);
+
 typedef struct
 {
 	void (*handler)(int offset, int data);
+	uint32_t toZero;
 } WriteHandler;
 
 extern ReadHandler *InputPortRead[BUTTON_END + 1];
@@ -75,8 +97,8 @@ extern WriteHandler *memoryWriteHandler;
 #define PNG_PTR_TYPE uint16_t
 extern PNG_PTR_TYPE *pngImage;
 extern uint32_t pngMemorySize;
-extern uint32_t pngWidth;
-extern uint32_t pngHeight;
+extern uint16_t pngWidth;
+extern uint16_t pngHeight;
 
 #ifdef __cplusplus
 extern "C"
@@ -89,10 +111,10 @@ extern "C"
 
 	struct VisibleArea
 	{
-		uint32_t minX;
-		uint32_t maxX;
-		uint32_t minY;
-		uint32_t maxY;
+		uint16_t minX;
+		uint16_t maxX;
+		uint16_t minY;
+		uint16_t maxY;
 	};
 
 #define TRANSPARENCY_NONE 0
@@ -100,22 +122,24 @@ extern "C"
 #ifdef ESP32P4
 #define TRANSPARENCY_BLACK_COLOR 0
 #else
-#define TRANSPARENCY_BLACK_COLOR 255
+#define TRANSPARENCY_BLACK_COLOR 0
 #endif
 #define TRANSPARENCY_REPLACE 2
 #define TRANSPARENT_NONE_COLOR 0
 
 	extern THE_COLOR froggerWater;
 
-#define CHECK_IF_DIRTY_X(x) DIRTY_MIN(x, screenDirtyMinX) DIRTY_MAX(x+1, screenDirtyMaxX)
-#define CHECK_IF_DIRTY_Y(y) DIRTY_MIN(y, screenDirtyMinY) DIRTY_MAX(y+1, screenDirtyMaxY)
+#define CHECK_IF_DIRTY_X(x) DIRTY_MIN(x, screenDirtyMinX) DIRTY_MAX(x + 1, screenDirtyMaxX)
+#define CHECK_IF_DIRTY_Y(y) DIRTY_MIN(y, screenDirtyMinY) DIRTY_MAX(y + 1, screenDirtyMaxY)
 #define CHECK_IF_DIRTY_XY(x, y) CHECK_IF_DIRTY_X(x) CHECK_IF_DIRTY_Y(y)
 
 	extern uint16_t screenPosX;
 	extern uint16_t screenPosY;
 
-	extern void GameScrollLine(uint32_t line, uint32_t scroll, uint16_t height);
-	extern void GameDrawElement(THE_COLOR *theScreen, uint32_t atX, uint32_t atY, bool flipX, bool flipY, uint16_t tileIndex, uint8_t paletteIndex, uint8_t blackIsTransparent, THE_COLOR replacedColor);
+	extern void GameScrollLine(uint16_t line, uint16_t scroll, uint16_t height);
+	extern void GamePlotPixel(uint16_t x, uint16_t y, THE_COLOR color);
+	extern void GameClearPixel(uint16_t x, uint16_t y);
+	extern void GameDrawElement(THE_COLOR *theScreen, uint16_t atX, uint16_t atY, bool flipX, bool flipY, uint16_t tileIndex, uint8_t paletteIndex, uint8_t blackIsTransparent, THE_COLOR replacedColor);
 
 	extern uint8_t Z80InterruptVector[MAX_Z80_CPU];
 	extern bool Z80InterruptEnable[MAX_Z80_CPU];
@@ -172,12 +196,18 @@ extern "C"
 	// main CPU memory
 	extern uint8_t *boardMemory;
 	extern uint32_t boardMemorySize;
-	// extern uint32_t boardMemoryWriteMin;
-	// extern uint32_t boardMemoryWriteMax;
 	extern int boardMemoryRead0(int address);
 	extern int boardMemoryRead(int address);
+	extern int boardMemoryReadDecode(int address);
 	extern void boardMemoryWrite(int address, int value);
+	extern void boardMemoryWriteDecode(int address, int value);
 	extern void boardMemoryWriteNone(int address, int value);
+
+	/* use this to set the a different opcode base address when using a CPU with
+   opcodes and data encrypted separately */
+#define MAX_CPU 3
+	// extern uint8_t *romptr[MAX_CPU];
+	extern void memory_set_opcode_base(int cpu, unsigned char *base);
 
 	// graphics memory
 	extern uint8_t *gfxMemory;
@@ -220,15 +250,21 @@ extern "C"
 	extern struct GfxElement *allGfx[MAX_GFX_ELEMENTS];
 
 	extern THE_COLOR *screenData;
-	extern THE_COLOR *screenDataOld;
+	#define DIRTY_NOT 0
+	#define DIRTY_YES 1
+	#define DIRTY_TRANSPARENT 2
+	extern uint8_t *dirtybuffer;
 	extern THE_COLOR *screenBitmap;
-	extern uint32_t screenWidth;
-	extern uint32_t screenHeight;
+	extern uint16_t screenWidth;
+	extern uint16_t screenHeight;
 	extern uint32_t screenLength;
-	extern uint32_t screenDirtyMinX;
-	extern uint32_t screenDirtyMinY;
-	extern uint32_t screenDirtyMaxX;
-	extern uint32_t screenDirtyMaxY;
+	extern uint16_t screenDirtyMinX;
+	extern uint16_t screenDirtyMinY;
+	extern uint16_t screenDirtyMaxX;
+	extern uint16_t screenDirtyMaxY;
+
+
+	#define FREE(x) {if(x != nullptr) { free(x); } x = nullptr;}
 
 	// extern int readbit(const uint8_t *src,int bitnum);
 	// static int readbit(const uint8_t *src, int bitnum)

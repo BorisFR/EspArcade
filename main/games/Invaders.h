@@ -12,13 +12,13 @@ extern "C"
 {
 #endif
 
-    extern void invaders_videoram_w(int offset, int data);
+    WRITE_HANDLER(invaders_videoram_w);
 
 #ifdef __cplusplus
 }
 #endif
 
-#define INVADERS {"invaders", "Space Invaders", {266, 224, 256, VISIBLE_AREA_FULL, ORIENTATION_DEFAULT, NOTHING, NOTHING}, 3000000 / 60, {invaders_rom, NOTHING, invaders_readmem, invaders_writemem, invaders_input_ports, invaders_readport, invaders_writeport}, MACHINE_8080BW}
+#define INVADERS {"invaders", "Space Invaders", {307, 224, 256, VISIBLE_AREA_FULL, ORIENTATION_DEFAULT, NOTHING, NOTHING}, 3000000 / 60, {invaders_rom, NOTHING, invaders_readmem, invaders_writemem, invaders_input_ports, invaders_readport, invaders_writeport}, MACHINE_8080BW}
 
 ROM_START(invaders_rom)
 ROM_REGION(0x10000)                                // 64k for code
@@ -37,7 +37,7 @@ static struct MemoryReadAddress invaders_readmem[] = {
 static struct MemoryWriteAddress invaders_writemem[] = {
     {0x0000, 0x1fff, MWA_ROM},
     {0x2000, 0x23ff, MWA_RAM},
-    { 0x2400, 0x3fff, invaders_videoram_w }, //, &invaders_videoram },
+	{ 0x2400, 0x3fff, invaders_videoram_w, &videoram, &videoram_size },
     {0x4000, 0x57ff, MWA_ROM},
     {-1}};
 

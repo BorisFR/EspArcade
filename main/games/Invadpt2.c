@@ -2,14 +2,13 @@
 
 #define INVADERS_INVERT_Y(value) 264 - value
 
-void invadpt2_videoram_w(int offset, int data)
+WRITE_HANDLER(invadpt2_videoram_w)
 {
-    if (data == boardMemory[offset])
+    if (data == videoram[offset])
         return;
-    boardMemory[offset] = data;
-    uint32_t address = offset - 0x2400;
-    uint16_t x = address / 32;
-    uint16_t y = screenHeight - 8 * (address % 32);
+    videoram[offset] = data;
+    uint16_t x = offset / 32;
+    uint16_t y = screenHeight - 8 * (offset % 32);
     DIRTY_MIN(x, screenDirtyMinX)
     DIRTY_MAX(x + 1, screenDirtyMaxX)
     DIRTY_MIN(y - 8, screenDirtyMinY)
@@ -71,16 +70,14 @@ void invadpt2_videoram_w(int offset, int data)
         c = myBlack;
     for (uint8_t bit = 0; bit < 8; bit++)
     {
-        uint32_t index = x + (y - bit - 1) * screenWidth;
-        if (!(data & 0x01))
+        if ((data & 0x01))
         {
-            screenData[index] = myBlack;
+            GamePlotPixel(x, y - bit - 1, c);
         }
         else
         {
-            screenData[index] = c;
+            GameClearPixel(x, y - bit - 1);
         }
-        index++;
         data >>= 1;
     }
 }

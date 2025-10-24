@@ -91,6 +91,25 @@ int JPEGDraw(JPEGDRAW *pDraw)
     }
     return 1;
 }
+
+uint32_t tempWidth = 0;
+
+int JPEGDrawToUser(JPEGDRAW *pDraw)
+{
+    // printf("jpeg draw: x,y=%d / %d, cx,cy = %d / %d\n", pDraw->x, pDraw->y, pDraw->iWidth, pDraw->iHeight);
+    uint32_t index = 0;
+    for (uint16_t y = pDraw->y; y < pDraw->y + pDraw->iHeight; y++)
+    {
+        for (uint16_t x = pDraw->x; x < pDraw->x + pDraw->iWidth; x++)
+        {
+            uint32_t pos = y * tempWidth + x;
+            PNG_PTR_TYPE *p = static_cast<PNG_PTR_TYPE *>(pDraw->pUser);
+            p[pos] = pDraw->pPixels[index++];
+            //tempImage[pos] = pDraw->pPixels[index++];
+        }
+    }
+    return 1;
+}
 #endif
 
 // *******************************************************************
@@ -103,8 +122,14 @@ TheSdCard::TheSdCard() { isOk = false; }
 
 TheSdCard::~TheSdCard()
 {
+    MY_DEBUG(TAG, "destroyed")
     if (pngWidth + pngHeight > 0)
-        free(pngImage);
+    {
+        pngWidth = 0;
+        pngHeight = 0;
+        pngMemorySize = 0;
+        FREE(pngImage);
+    }
 }
 
 // *******************************************************************
@@ -269,7 +294,7 @@ bool TheSdCard::LoadFile(std::string filename, unsigned char *toMemory, uint64_t
     if (result != lSize)
     {
         MY_DEBUG(TAG, "File reading error");
-        free(buffer);
+        FREE(buffer);
         return false;
     }
     MY_DEBUG2(TAG, "Transfert to:", offset);
@@ -277,7 +302,7 @@ bool TheSdCard::LoadFile(std::string filename, unsigned char *toMemory, uint64_t
     {
         toMemory[i + offset] = buffer[i];
     }
-    free(buffer);
+    FREE(buffer);
 #endif
     return true;
 }
@@ -316,8 +341,9 @@ bool TheSdCard::LoadPngFile(const char *filename)
 // }
 // png.close();
 #else
-    if (pngWidth + pngHeight > 0)
-        free(pngImage);
+    if (pngWidth + pngHeight > 0) {
+        FREE(pngImage);
+    }
     std::string fullPath = std::string(PC_PATH) + "sdcard/" + filename;
     const char *fname = fullPath.c_str();
     MY_DEBUG2TEXT(TAG, "Loading PNG file:", fname);
@@ -364,15 +390,16 @@ bool TheSdCard::LoadPngFile(const char *filename)
 #ifdef USE_LIB_JPG
 bool TheSdCard::LoadJpgFile(const char *filename)
 {
-    if (pngWidth + pngHeight > 0)
-        free(pngImage);
+    if (pngWidth + pngHeight > 0){
+        FREE(pngImage);
+    }
 
     const char *fname;
 #ifdef ESP32P4
     std::string fullPath = std::string(MOUNT_POINT) + std::string("/") + filename;
-#else        
+#else
     std::string fullPath = std::string(PC_PATH) + "sdcard/" + filename;
-#endif    
+#endif
     fname = fullPath.c_str();
     MY_DEBUG2TEXT(TAG, "Loading JPG file:", fname);
     int rc = myJpeg.open(fname, myOpen, myClose, myReadJPEG, mySeekJPEG, JPEGDraw);
@@ -383,7 +410,7 @@ bool TheSdCard::LoadJpgFile(const char *filename)
     }
     // myJpeg.setPixelType(RGB565_BIG_ENDIAN);
     pngMemorySize = myJpeg.getWidth() * myJpeg.getHeight() * sizeof(PNG_PTR_TYPE);
-    printf("image specs: (%d x %d), %d bpp, pixel type: %d, memorySize: %lu\n", myJpeg.getWidth(), myJpeg.getHeight(), myJpeg.getBpp(), myJpeg.getPixelType(), pngMemorySize);
+    //printf("image specs: (%d x %d), %d bpp, pixel type: %d, memorySize: %lu\n", myJpeg.getWidth(), myJpeg.getHeight(), myJpeg.getBpp(), myJpeg.getPixelType(), pngMemorySize);
     pngImage = (PNG_PTR_TYPE *)malloc(pngMemorySize);
     if (pngImage == NULL)
     {
@@ -406,4 +433,31 @@ bool TheSdCard::LoadJpgFile(const char *filename)
 
     return true;
 }
+
+bool TheSdCard::LoadJpgFileTo(PNG_PTR_TYPE *image, const char *filename, uint32_t lineWidth)
+{
+    const char *fname;
+    std::string fullPath = std::string(MOUNT_POINT) + filename;
+    fname = fullPath.c_str();
+    MY_DEBUG2TEXT(TAG, "Loading JPG file:", fname);
+    int rc = myJpeg.open(fname, myOpen, myClose, myReadJPEG, mySeekJPEG, JPEGDrawToUser);
+    if (rc == JPEG_SUCCESS)
+    {
+        printf("Error opening JPEG\n");
+        return false;
+    }
+    tempWidth = lineWidth;
+    uint32_t size = myJpeg.getWidth() * myJpeg.getHeight() * sizeof(PNG_PTR_TYPE);
+    //printf("image specs: (%d x %d), %d bpp, pixel type: %d, memorySize: %lu\n", myJpeg.getWidth(), myJpeg.getHeight(), myJpeg.getBpp(), myJpeg.getPixelType(), size);
+    memset(image, 0xFFFF, size);
+    myJpeg.setUserPointer(image);
+    rc = myJpeg.decode(0, 0, 0);
+    if (rc == 0)
+    {
+        MY_DEBUG2(TAG, "JPEG decode failed with error code:", rc);
+        myJpeg.close();
+        return false;
+    }
+    myJpeg.close();
+    return true;}
 #endif
