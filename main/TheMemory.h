@@ -94,11 +94,11 @@ extern WriteHandler *memoryWriteHandler;
 
 #include "machines/mb14241.h"
 
-#define PNG_PTR_TYPE uint16_t
-extern PNG_PTR_TYPE *pngImage;
-extern uint32_t pngMemorySize;
-extern uint16_t pngWidth;
-extern uint16_t pngHeight;
+#define THE_BACKGROUND_COLOR uint16_t
+extern THE_BACKGROUND_COLOR *screenBackground;
+extern uint32_t screenBackgroundMemorySize;
+extern uint16_t screenBackgroundWidth;
+extern uint16_t screenBackgroundHeight;
 
 #ifdef __cplusplus
 extern "C"
@@ -136,6 +136,7 @@ extern "C"
 	extern uint16_t screenPosX;
 	extern uint16_t screenPosY;
 
+	extern bool GameTestSpriteOnTile(uint16_t spriteX, uint16_t spriteY, uint16_t spriteWidth, uint16_t spriteHeight, uint16_t tileX, uint16_t tileY, uint16_t tileWidth, uint16_t tileHeight);
 	extern void GameScrollLine(uint16_t line, uint16_t scroll, uint16_t height);
 	extern void GamePlotPixel(uint16_t x, uint16_t y, THE_COLOR color);
 	extern void GameClearPixel(uint16_t x, uint16_t y);
@@ -237,27 +238,27 @@ extern "C"
 
 	extern struct GfxElement *element;
 
-	extern uint8_t *tileGfx;
+	/*extern uint8_t *tileGfx;
 	extern uint16_t tileWidth;
 	extern uint16_t tileHeight;
 	extern uint16_t tilesCount;
 	extern uint8_t *spriteGfx;
 	extern uint16_t spriteWidth;
 	extern uint16_t spriteHeight;
-	extern uint16_t spritesCount;
+	extern uint16_t spritesCount;*/
 
 	extern uint8_t countGfxElement;
 	extern struct GfxElement *allGfx[MAX_GFX_ELEMENTS];
 
-	extern THE_COLOR *screenData;
+	extern THE_COLOR *screenGame;
 	#define DIRTY_NOT 0
 	#define DIRTY_YES 1
 	#define DIRTY_TRANSPARENT 2
-	extern uint8_t *dirtybuffer;
+	extern uint8_t *screenGameDirty;
 	extern THE_COLOR *screenBitmap;
-	extern uint16_t screenWidth;
-	extern uint16_t screenHeight;
-	extern uint32_t screenLength;
+	extern uint16_t screenGameWidth;
+	extern uint16_t screenGameHeight;
+	extern uint32_t screenGameLength;
 	extern uint16_t screenDirtyMinX;
 	extern uint16_t screenDirtyMinY;
 	extern uint16_t screenDirtyMaxX;

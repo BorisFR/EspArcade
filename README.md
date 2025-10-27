@@ -38,9 +38,9 @@ Mesures effectuées sans limite activée, chaque jeu a une résolution qui est d
 
 | 🕹️ Jeu | Nom du<br>dossier | Gameplay | Audio | FPS | Screen dirty<br>Implemented | C.P.U. |
 | :--- | :--- | :--- | :--- | ---: | :--- | :--- |
-| Space Invaders | invaders | ✅ | ❌ | 250 | 🟢 | i8080 |
-| Space Invaders Part II | invadpt2 | ✅ | ❌ | 250 | 🟢 | i8080 |
-| Pacman | pacman | ✅ | ❌ | 55 | 🟡 | z80 |
+| Space Invaders | invaders | ✅ | ❌ | 350 | 🟢 | i8080 |
+| Space Invaders Part II | invadpt2 | ✅ | ❌ | 350 | 🟢 | i8080 |
+| Pacman | pacman | ✅ | ❌ | 120 | 🟡 | z80 |
 | Frogger | frogger | ❌ | ❌ | 40 | 🟡 | 2 x z80 |
 | Galaxian | galaxian | ✅ | ❌ | 45 | 🟡 | z80 |
 
