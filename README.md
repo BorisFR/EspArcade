@@ -49,7 +49,7 @@ Mesures effectuées sans limite activée, chaque jeu a une résolution qui est d
 In _background: all the background image for each game, plus 'themenu.jpg'
 In _menu: all the marquee for the menu
 One folder for each game, contains each roms for the game. (no zip file)
-Details for each game is available here: [Games List](https://borisfr.github.io/RayLibArcade/)
+Details for each game is available here: [Games List](https://borisfr.github.io/EspArcade/)
 
 ```
 ├── _background
