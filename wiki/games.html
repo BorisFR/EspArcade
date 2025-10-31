@@ -1,0 +1,43 @@
+<div id="overlay" class="overlay">
+    <div class="popup" onclick="closePopup()">
+        <button class="close-btn" onclick="closePopup()">X</button>
+        <div id="gameTitle" class="gameTitle center">game title</div>
+        <div id="gameDetail">
+            <table class="tableBorder1 tableAll">
+                <tr class="tableBorder1">
+                    <td class="tableBorder1 bold">Rom</td>
+                    <td class="tableBorder1 monospace" id="romName">name</td>
+                    <td class="tableBorder1 monospace vtop center" rowspan="3"><img id="gameScreen" class="gameScreen" /></td>
+                </tr>
+                <tr class="tableBorder1">
+                    <td class="tableBorder1 bold">Machine</td>
+                    <td class="tableBorder1 monospace" id="machineType">68000</td>
+                </tr>
+                <tr class="tableBorder1">
+                    <td class="tableBorder1 vtop bold"></td>
+                    <td class="tableBorder1">
+                        <table class="tableBorder1 monospace" id="romList">
+                            <thead class="tableBorder1">
+                                <tr class="tableBorder1 font">
+                                    <td class="tableBorder1">File</td>
+                                    <td class="tableBorder1">Length</td>
+                                    <td class="tableBorder1">CRC</td>
+                                    <td class="tableBorder1">Type</td>
+                                </tr>
+                            </thead>
+                            <tr>
+                                <td>AYRIAU</td>
+                                <td>2048</td>
+                                <td>637258167451926</td>
+                                <td>CPU</td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+<h1>Games</h1>
+<div id="output"></div>
+<script>dolist();</script>

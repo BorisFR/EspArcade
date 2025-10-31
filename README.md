@@ -40,51 +40,36 @@ Mesures effectuées sans limite activée, chaque jeu a une résolution qui est d
 | :--- | :--- | :--- | :--- | ---: | :--- | :--- |
 | Space Invaders | invaders | ✅ | ❌ | 350 | 🟢 | i8080 |
 | Space Invaders Part II | invadpt2 | ✅ | ❌ | 350 | 🟢 | i8080 |
-| Pacman | pacman | ✅ | ❌ | 120 | 🟡 | z80 |
-| Frogger | frogger | ❌ | ❌ | 40 | 🟡 | 2 x z80 |
-| Galaxian | galaxian | ✅ | ❌ | 45 | 🟡 | z80 |
+| Pacman | pacman | ✅ | ❌ | 65 | 🟡 | z80 |
+| Frogger | frogger | ❌ | ❌ | 16 | 🟡 | 2 x z80 |
+| Galaxian | galaxian | ✅ | ❌ | 15 | 🟡 | z80 |
 
 # Structure des dossiers de la carte SD
 
+In _background: all the background image for each game, plus 'themenu.jpg'
+In _menu: all the marquee for the menu
+One folder for each game, contains each roms for the game. (no zip file)
+Details for each game is available here: [Games List](https://borisfr.github.io/RayLibArcade/)
 
 ```
-├── frogger
-│   ├── frogger.26
-│   ├── frogger.27
-│   ├── frogger.606
-│   ├── frogger.607
-│   ├── frogger.608
-│   ├── frogger.609
-│   ├── frogger.610
-│   ├── frsm3.7
-│   └── pr-91.6l
-├── invaders
-│   ├── invaders.e
-│   ├── invaders.f
-│   ├── invaders.g
-│   └── invaders.h
-├── invadpt2
-│   ├── pv01
-│   ├── pv02
-│   ├── pv03
-│   ├── pv04
-│   ├── pv05
-│   ├── pv06.1
-│   └── pv07.2
-├── pacman
-│   ├── 82s123.7f
-│   ├── 82s126.1m
-│   ├── 82s126.3m
-│   ├── 82s126.4a
-│   ├── pacman.5e
-│   ├── pacman.5f
-│   ├── pacman.6e
-│   ├── pacman.6f
-│   ├── pacman.6h
-│   └── pacman.6j
-└── marquee
-│   ├── frogger.png
-│   ├── invaders.png
-│   ├── invadpt2.png
-│   └── pacman.png
+├── _background
+│   ├── game.jpg
+│   ├── othergame.jpg
+│   ├── ...
+│   ├── themenu.jpg
+│   └── ...
+├── _menu
+│   ├── game.jpg
+│   ├── othergame.jpg
+│   └── ...
+├── game
+│   ├── rom1
+│   ├── rom2
+│   └── ...
+├── othergame
+│   ├── rom1
+│   ├── rom2
+│   ├── rom3
+│   └── ...
+├── ...
 ```

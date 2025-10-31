@@ -39,6 +39,22 @@ TheGame::TheGame()
 
 TheGame::~TheGame()
 {
+    if (gameSpritesNumber > 0)
+    {
+        FREE(gameSpritesX);
+        FREE(gameSpritesY);
+        FREE(gameSpritesValue);
+        FREE(gameSpritesColor);
+        gameSpritesNumber = 0;
+    }
+    if (gameTilesNumber > 0)
+    {
+        FREE(gameTilesX);
+        FREE(gameTilesY);
+        FREE(gameTilesValue);
+        FREE(gameTilesColor);
+        gameTilesNumber = 0;
+    }
     screenDirtyMaxX = 0;
     screenDirtyMinX = 0;
     screenDirtyMaxY = 0;
@@ -52,6 +68,7 @@ TheGame::~TheGame()
     screenGameWidth = 0;
     screenGameHeight = 0;
     FREE(screenGame);
+    FREE(screenGameOld);
     FREE(screenGameDirty);
     FREE(boardMemory);
     FREE(gfxMemory);
@@ -104,23 +121,23 @@ void TheGame::Setup(TheDisplay &display, TheSdCard &sdCard)
     uint8_t portValue = 0;
     while (!finish)
     {
-        //MY_DEBUG2(TAG, "portValue=", portValue)
+        // MY_DEBUG2(TAG, "portValue=", portValue)
         switch (allGames[currentGame].machine.inputPorts[i].type)
         {
         case IPT_END:
             if (portNumber >= 0)
                 machineInputPort.InputPortSet(portNumber, portValue);
             finish = true;
-            //MY_DEBUG2(TAG, "==> Port ", portNumber)
-            //MY_DEBUG2(TAG, "    with default value ", portValue)
+            // MY_DEBUG2(TAG, "==> Port ", portNumber)
+            // MY_DEBUG2(TAG, "    with default value ", portValue)
             continue;
             break;
         case IPT_PORT:
             if (portNumber >= 0)
             {
                 machineInputPort.InputPortSet(portNumber, portValue);
-                //MY_DEBUG2(TAG, "=> Port ", portNumber)
-                //MY_DEBUG2(TAG, "    with default value ", portValue)
+                // MY_DEBUG2(TAG, "=> Port ", portNumber)
+                // MY_DEBUG2(TAG, "    with default value ", portValue)
             }
             portNumber++;
             portValue = 0;
@@ -174,12 +191,12 @@ void TheGame::Setup(TheDisplay &display, TheSdCard &sdCard)
             PORT_BIT_VALUE
             break;
         case IPT_DIPSWITCH_NAME:
-            //MY_DEBUG2TEXT(TAG, "IPT_DIPSWITCH_NAME", allGames[currentGame].machine.inputPorts[i].name)
+            // MY_DEBUG2TEXT(TAG, "IPT_DIPSWITCH_NAME", allGames[currentGame].machine.inputPorts[i].name)
             PORT_SWITCH_DEFAULT_VALUE(allGames[currentGame].machine.inputPorts[i].default_value)
             PORT_SWITCH_VALUE
             break;
         case IPT_DIPSWITCH_SETTING:
-            //MY_DEBUG2TEXT(TAG, "IPT_DIPSWITCH_SETTING", allGames[currentGame].machine.inputPorts[i].name)
+            // MY_DEBUG2TEXT(TAG, "IPT_DIPSWITCH_SETTING", allGames[currentGame].machine.inputPorts[i].name)
             PORT_SWITCH_VALUE
             break;
         default:
@@ -392,20 +409,21 @@ bool TheGame::Initialize(TheDisplay &display, TheSdCard &sdCard)
         return false;
     }
     memset(screenGame, 0, screenGameLength);
+    screenGameOld = (THE_COLOR *)malloc(screenGameLength);
+    if (screenGameOld == NULL)
+    {
+        MY_DEBUG(TAG, "Error allocating screen memory");
+        return false;
+    }
+    memset(screenGameOld, 0, screenGameLength);
     screenGameDirty = (uint8_t *)malloc(screenGameLength);
     if (screenGameDirty == NULL)
     {
         MY_DEBUG(TAG, "Error allocating screenGameDirty memory");
         return false;
     }
-    memset(screenGameDirty, DIRTY_TRANSPARENT, screenGameLength);
-    // screenGameOld = (THE_COLOR *)malloc(screenGameLength);
-    // if (screenGameOld == NULL)
-    // {
-    //     MY_DEBUG(TAG, "Error allocating old screen memory");
-    //     return false;
-    // }
-    // memset(screenGameOld, 0, screenGameLength);
+    memset(screenGameDirty, DIRTY_NOT, screenGameLength);
+    //memset(screenGameDirty, DIRTY_TRANSPARENT, screenGameLength);
     screenBitmap = (THE_COLOR *)malloc(screenGameLength);
     if (screenBitmap == NULL)
     {
@@ -421,7 +439,7 @@ bool TheGame::Initialize(TheDisplay &display, TheSdCard &sdCard)
         if (GAME_ROMS[i].length == 0 && GAME_ROMS[i].offset == 0)
         {
             finish = true;
-            continue;
+            break;
         }
         if (GAME_ROMS[i].name == NULL)
         {
