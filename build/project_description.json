@@ -1,7 +1,7 @@
 {
     "version":            "1.2",
     "project_name":       "EspArcade",
-    "project_version":    "f5b363d-dirty",
+    "project_version":    "354ebb0-dirty",
     "project_path":       "D:/DEV/EspArcade",
     "idf_path":           "C:/Users/sfard/esp/v5.5/esp-idf",
     "build_dir":          "D:/DEV/EspArcade/build",
@@ -1045,7 +1045,7 @@
             "managed_reqs": [],
             "managed_priv_reqs": [ "esp32_p4_function_ev_board", "esp_lcd_jd9365", "espressif__esp_lcd_touch" ],
             "file": "D:/DEV/EspArcade/build/esp-idf/main/libmain.a",
-            "sources": [ "D:/DEV/EspArcade/main/main.cpp", "D:/DEV/EspArcade/main/TheDisplay.cpp", "D:/DEV/EspArcade/main/TheGame.cpp", "D:/DEV/EspArcade/main/TheMemory.c", "D:/DEV/EspArcade/main/TheMenu.cpp", "D:/DEV/EspArcade/main/TheSdCard.cpp", "D:/DEV/EspArcade/main/TheTools.cpp", "D:/DEV/EspArcade/main/GamesList.c", "D:/DEV/EspArcade/main/MyDefine.c", "D:/DEV/EspArcade/main/esp_lcd_gsl3680.c", "D:/DEV/EspArcade/main/gsl_point_id.c", "D:/DEV/EspArcade/main/gsl3680_touch.cpp", "D:/DEV/EspArcade/main/libjpg/JPEGDEC.cpp", "D:/DEV/EspArcade/main/machines/CpuI8085.c", "D:/DEV/EspArcade/main/machines/CpuZ80.c", "D:/DEV/EspArcade/main/machines/i8080.cpp", "D:/DEV/EspArcade/main/machines/i8080instructions.cpp", "D:/DEV/EspArcade/main/machines/MachineDriver8080bw.cpp", "D:/DEV/EspArcade/main/machines/MachineInputPort.cpp", "D:/DEV/EspArcade/main/machines/MachineTheZ80.cpp", "D:/DEV/EspArcade/main/machines/mb14241.c", "D:/DEV/EspArcade/main/games/Frogger.c", "D:/DEV/EspArcade/main/games/Galaxian.c", "D:/DEV/EspArcade/main/games/Invaders.c", "D:/DEV/EspArcade/main/games/Invadpt2.c", "D:/DEV/EspArcade/main/games/Pacman.c", "D:/DEV/EspArcade/main/games/Pengo.c" ],
+            "sources": [ "D:/DEV/EspArcade/main/main.cpp", "D:/DEV/EspArcade/main/TheDirty.c", "D:/DEV/EspArcade/main/TheDisplay.cpp", "D:/DEV/EspArcade/main/TheGame.cpp", "D:/DEV/EspArcade/main/TheMemory.c", "D:/DEV/EspArcade/main/TheMenu.cpp", "D:/DEV/EspArcade/main/TheSdCard.cpp", "D:/DEV/EspArcade/main/TheTools.cpp", "D:/DEV/EspArcade/main/GamesList.c", "D:/DEV/EspArcade/main/MyDefine.c", "D:/DEV/EspArcade/main/esp_lcd_gsl3680.c", "D:/DEV/EspArcade/main/gsl_point_id.c", "D:/DEV/EspArcade/main/gsl3680_touch.cpp", "D:/DEV/EspArcade/main/libjpg/JPEGDEC.cpp", "D:/DEV/EspArcade/main/machines/CpuI8085.c", "D:/DEV/EspArcade/main/machines/CpuZ80.c", "D:/DEV/EspArcade/main/machines/i8080.cpp", "D:/DEV/EspArcade/main/machines/i8080instructions.cpp", "D:/DEV/EspArcade/main/machines/MachineDriver8080bw.cpp", "D:/DEV/EspArcade/main/machines/MachineInputPort.cpp", "D:/DEV/EspArcade/main/machines/MachineTheZ80.cpp", "D:/DEV/EspArcade/main/machines/mb14241.c", "D:/DEV/EspArcade/main/games/Frogger.c", "D:/DEV/EspArcade/main/games/Galaxian.c", "D:/DEV/EspArcade/main/games/Invaders.c", "D:/DEV/EspArcade/main/games/Invadpt2.c", "D:/DEV/EspArcade/main/games/Pacman.c", "D:/DEV/EspArcade/main/games/Pengo.c" ],
             "include_dirs": [ "." ]
         },
         "mbedtls": {
