@@ -38,11 +38,11 @@ Mesures effectuées sans limite activée, chaque jeu a une résolution qui est d
 
 | 🕹️ Jeu | Nom du<br>dossier | Gameplay | Audio | FPS | Screen dirty<br>Implemented | C.P.U. |
 | :--- | :--- | :--- | :--- | ---: | :--- | :--- |
-| Space Invaders | invaders | ✅ | ❌ | 350 | 🟢 | i8080 |
-| Space Invaders Part II | invadpt2 | ✅ | ❌ | 350 | 🟢 | i8080 |
-| Pacman | pacman | ✅ | ❌ | 65 | 🟡 | z80 |
-| Frogger | frogger | ❌ | ❌ | 16 | 🟡 | 2 x z80 |
-| Galaxian | galaxian | ✅ | ❌ | 40 | 🟡 | z80 |
+| Space Invaders | invaders | ✅ | ❌ | 300 | 🟢 | i8080 |
+| Space Invaders Part II | invadpt2 | ✅ | ❌ | 300 | 🟢 | i8080 |
+| Pacman | pacman | ✅ | ❌ | 80 | 🟡 | z80 |
+| Frogger | frogger | ❌ | ❌ | 80 | 🟡 | 2 x z80 |
+| Galaxian | galaxian | ✅ | ❌ | 80 | 🟡 | z80 |
 
 # Structure des dossiers de la carte SD
 

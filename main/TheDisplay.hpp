@@ -43,6 +43,9 @@
 #include "TheTools.hpp"
 #include "GameDefinition.h"
 #include <string>
+#ifdef USE_DIRTY
+#include "TheDirty.h"
+#endif
 
 #ifdef ESP32P4
 #define SCREEN_BPP (16)
@@ -128,7 +131,7 @@
 #ifdef ESP32P4
 #define TOUCH_DELAY_RELEASED 20
 #endif
-#define TOUCH_DELAY_CLICK 80
+#define TOUCH_DELAY_CLICK 100
 #define TOUCH_MOVE_DISTANCE 150
 
 class TheDisplay

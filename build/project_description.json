@@ -1,7 +1,7 @@
 {
     "version":            "1.2",
     "project_name":       "EspArcade",
-    "project_version":    "354ebb0-dirty",
+    "project_version":    "c70a5aa-dirty",
     "project_path":       "D:/DEV/EspArcade",
     "idf_path":           "C:/Users/sfard/esp/v5.5/esp-idf",
     "build_dir":          "D:/DEV/EspArcade/build",
